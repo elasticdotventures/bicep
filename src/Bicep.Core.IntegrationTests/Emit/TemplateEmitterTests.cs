@@ -31,14 +31,19 @@ namespace Bicep.Core.IntegrationTests.Emit
         [DynamicData(nameof(GetValidDataSets), DynamicDataSourceType.Method, DynamicDataDisplayNameDeclaringType = typeof(DataSet), DynamicDataDisplayName = nameof(DataSet.GetDisplayName))]
         public void ValidBicep_TemplateEmiterShouldProduceExpectedTemplate(DataSet dataSet)
         {
+            if (dataSet.Name != "Parameters_LF")
+            {
+                return;
+            }
+
             var outputDirectory = dataSet.SaveFilesToTestDirectory(TestContext);
             var bicepFilePath = Path.Combine(outputDirectory, DataSet.TestFileMain);
             var compiledFilePath = FileHelper.GetResultFilePath(this.TestContext, Path.Combine(dataSet.Name, DataSet.TestFileMainCompiled));
 
             // emitting the template should be successful
             var result = this.EmitTemplate(SyntaxTreeGroupingBuilder.Build(new FileResolver(), new Workspace(), PathHelper.FilePathToFileUrl(bicepFilePath)), compiledFilePath, BicepTestConstants.DevAssemblyFileVersion);
-            result.Status.Should().Be(EmitStatus.Succeeded);
             result.Diagnostics.Should().BeEmptyOrContainDeprecatedDiagnosticOnly();
+            result.Status.Should().Be(EmitStatus.Succeeded);
 
             var actual = JToken.Parse(File.ReadAllText(compiledFilePath));
 
@@ -57,8 +62,8 @@ namespace Bicep.Core.IntegrationTests.Emit
 
             // emitting the template should be successful
             var result = this.EmitTemplate(syntaxTreeGrouping, compiledFilePath, BicepTestConstants.DevAssemblyFileVersion);
-            result.Status.Should().Be(EmitStatus.Succeeded);
             result.Diagnostics.Should().BeEmpty();
+            result.Status.Should().Be(EmitStatus.Succeeded);
 
             var bytes = File.ReadAllBytes(compiledFilePath);
             // No BOM at the start of the file
@@ -102,8 +107,8 @@ namespace Bicep.Core.IntegrationTests.Emit
 
             // emitting the template should fail
             var result = this.EmitTemplate(SyntaxTreeGroupingBuilder.Build(new FileResolver(), new Workspace(), PathHelper.FilePathToFileUrl(bicepFilePath)), filePath, BicepTestConstants.DevAssemblyFileVersion);
-            result.Status.Should().Be(EmitStatus.Failed);
             result.Diagnostics.Should().NotBeEmpty();
+            result.Status.Should().Be(EmitStatus.Failed);
         }
 
         [DataTestMethod]

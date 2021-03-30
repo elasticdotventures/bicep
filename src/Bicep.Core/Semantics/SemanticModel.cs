@@ -114,7 +114,92 @@ namespace Bicep.Core.Semantics
         /// a symbol will always be returned. Binding failures are represented with a non-null error symbol.
         /// </summary>
         /// <param name="syntax">the syntax node</param>
-        public Symbol? GetSymbolInfo(SyntaxBase syntax) => this.Binder.GetSymbolInfo(syntax);
+        public Symbol? GetSymbolInfo(SyntaxBase syntax)
+        {
+            switch (syntax)
+            {
+                case InstanceFunctionCallSyntax ifc:
+                {
+                    var baseType = GetTypeInfo(ifc.BaseExpression);
+                    switch (baseType)
+                    {
+                        case NamespaceType namespaceType when SyntaxTree.Hierarchy.GetParent(ifc) is DecoratorSyntax:
+                            return namespaceType.DecoratorResolver.TryGetSymbol(ifc.Name);
+                        case ObjectType objectType:
+                            return objectType.MethodResolver.TryGetSymbol(ifc.Name);
+                    }
+
+                    return null;
+                }
+                case PropertyAccessSyntax propertyAccess:
+                {
+                    var baseType = GetTypeInfo(propertyAccess.BaseExpression);
+                    var property = propertyAccess.PropertyName.IdentifierName;
+                    switch (baseType)
+                    {
+                        case ResourceType resourceType when resourceType.Body is ObjectType resourceObjectType:
+                            if (resourceObjectType.Properties.TryGetValue(property, out var typeProperty1))
+                            {
+                                return new PropertySymbol(property, typeProperty1.Description, typeProperty1.TypeReference.Type);
+                            }
+                            break;
+                        case ModuleType moduleType when moduleType.Body is ObjectType moduleObjectType:
+                            if (moduleObjectType.Properties.TryGetValue(property, out var typeProperty2))
+                            {
+                                return new PropertySymbol(property, typeProperty2.Description, typeProperty2.TypeReference.Type);
+                            }
+                            break;
+                        case ObjectType objectType:
+                            if (objectType.Properties.TryGetValue(property, out var typeProperty))
+                            {
+                                return new PropertySymbol(property, typeProperty.Description, typeProperty.TypeReference.Type);
+                            }
+                            break;
+                    }
+
+                    return null;
+                }
+                case ObjectPropertySyntax objectProperty:
+                {
+                    if (Binder.GetParent(objectProperty) is not {} parentSyntax)
+                    {
+                        return null;
+                    }
+                    
+                    var baseType = GetTypeInfo(parentSyntax);
+                    if (objectProperty.TryGetKeyText() is not {} propertyKey)
+                    {
+                        return null;
+                    }
+
+                    switch (baseType)
+                    {
+                        case ResourceType resourceType when resourceType.Body is ObjectType resourceObjectType:
+                            if (resourceObjectType.Properties.TryGetValue(propertyKey, out var typeProperty1))
+                            {
+                                return new PropertySymbol(propertyKey, typeProperty1.Description, typeProperty1.TypeReference.Type);
+                            }
+                            break;
+                        case ModuleType moduleType when moduleType.Body is ObjectType moduleObjectType:
+                            if (moduleObjectType.Properties.TryGetValue(propertyKey, out var typeProperty2))
+                            {
+                                return new PropertySymbol(propertyKey, typeProperty2.Description, typeProperty2.TypeReference.Type);
+                            }
+                            break;
+                        case ObjectType objectType:
+                            if (objectType.Properties.TryGetValue(propertyKey, out var typeProperty))
+                            {
+                                return new PropertySymbol(propertyKey, typeProperty.Description, typeProperty.TypeReference.Type);
+                            }
+                            break;
+                    }
+
+                    return null;
+                }
+            }
+
+            return this.Binder.GetSymbolInfo(syntax);
+        }
 
         /// <summary>
         /// Returns all syntax nodes that represent a reference to the specified symbol. This includes the definitions of the symbol as well.
