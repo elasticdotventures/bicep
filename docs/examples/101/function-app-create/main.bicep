@@ -26,7 +26,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   location: location
   sku: {
     name: 'Standard_LRS'
-    tier: 'Standard'
   }
   kind: 'StorageV2'
   properties: {
@@ -51,7 +50,9 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
 
 // Blob Services for Storage Account
 resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2019-06-01' = {
-  name: '${storageAccount.name}/default'
+  parent: storageAccount
+
+  name: 'default'
   properties: {
     cors: {
       corsRules: []
@@ -129,11 +130,11 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
       appSettings: [
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
         }
         {
           name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
@@ -166,7 +167,9 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
 
 // Function App Config
 resource functionAppConfig 'Microsoft.Web/sites/config@2020-06-01' = {
-  name: '${functionApp.name}/web'
+  parent: functionApp
+
+  name: 'web'
   properties: {
     numberOfWorkers: -1
     defaultDocuments: [
@@ -188,7 +191,6 @@ resource functionAppConfig 'Microsoft.Web/sites/config@2020-06-01' = {
     logsDirectorySizeLimit: 35
     detailedErrorLoggingEnabled: false
     publishingUsername: '$${functionAppName}'
-    azureStorageAccounts: {}
     scmType: 'None'
     use32BitWorkerProcess: true
     webSocketsEnabled: false
@@ -237,13 +239,15 @@ resource functionAppConfig 'Microsoft.Web/sites/config@2020-06-01' = {
     http20Enabled: true
     minTlsVersion: '1.2'
     ftpsState: 'AllAllowed'
-    PreWarmedInstanceCount: 0
+    preWarmedInstanceCount: 0
   }
 }
 
 // Function App Binding
 resource functionAppBinding 'Microsoft.Web/sites/hostNameBindings@2020-06-01' = {
-  name: '${functionApp.name}/${functionApp.name}.azurewebsites.net'
+  parent: functionApp
+
+  name: '${functionApp.name}.azurewebsites.net'
   properties: {
     siteName: functionApp.name
     hostNameType: 'Verified'

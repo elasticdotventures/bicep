@@ -49,14 +49,23 @@ module moduleWithoutPath = {
 //@[0:1) RightBrace |}|
 //@[1:3) NewLine |\n\n|
 
+// #completionTest(41) -> moduleBodyCompletions
+//@[47:48) NewLine |\n|
+module moduleWithPath './moduleb.bicep' =
+//@[0:6) Identifier |module|
+//@[7:21) Identifier |moduleWithPath|
+//@[22:39) StringComplete |'./moduleb.bicep'|
+//@[40:41) Assignment |=|
+//@[41:43) NewLine |\n\n|
+
 // missing identifier #completionTest(7) -> empty
 //@[49:50) NewLine |\n|
 module 
 //@[0:6) Identifier |module|
 //@[7:9) NewLine |\n\n|
 
-// #completionTest(24,25) -> object
-//@[35:36) NewLine |\n|
+// #completionTest(24,25) -> moduleObject
+//@[41:42) NewLine |\n|
 module missingValue '' = 
 //@[0:6) Identifier |module|
 //@[7:19) Identifier |missingValue|
@@ -1926,8 +1935,9 @@ module paramNameCompletionsInFilteredLoops 'modulea.bicep' = [for (x,i) in empty
 //@[10:11) LeftBrace |{|
 //@[11:12) NewLine |\n|
     // #completionTest(0,1,2) -> moduleAParams
-//@[46:48) NewLine |\n\n|
-
+//@[46:47) NewLine |\n|
+  
+//@[2:3) NewLine |\n|
   }
 //@[2:3) RightBrace |}|
 //@[3:4) NewLine |\n|
@@ -2432,6 +2442,317 @@ module anyTypeInScopeLoop 'empty.bicep' = [for thing in []: {
 }]
 //@[0:1) RightBrace |}|
 //@[1:2) RightSquare |]|
-//@[2:3) NewLine |\n|
+//@[2:4) NewLine |\n\n|
+
+// Key Vault Secret Reference
+//@[29:31) NewLine |\n\n|
+
+resource kv 'Microsoft.KeyVault/vaults@2019-09-01' existing = {
+//@[0:8) Identifier |resource|
+//@[9:11) Identifier |kv|
+//@[12:50) StringComplete |'Microsoft.KeyVault/vaults@2019-09-01'|
+//@[51:59) Identifier |existing|
+//@[60:61) Assignment |=|
+//@[62:63) LeftBrace |{|
+//@[63:64) NewLine |\n|
+  name: 'testkeyvault'
+//@[2:6) Identifier |name|
+//@[6:7) Colon |:|
+//@[8:22) StringComplete |'testkeyvault'|
+//@[22:23) NewLine |\n|
+}
+//@[0:1) RightBrace |}|
+//@[1:3) NewLine |\n\n|
+
+module secureModule1 'moduleb.bicep' = {
+//@[0:6) Identifier |module|
+//@[7:20) Identifier |secureModule1|
+//@[21:36) StringComplete |'moduleb.bicep'|
+//@[37:38) Assignment |=|
+//@[39:40) LeftBrace |{|
+//@[40:41) NewLine |\n|
+  name: 'secureModule1'
+//@[2:6) Identifier |name|
+//@[6:7) Colon |:|
+//@[8:23) StringComplete |'secureModule1'|
+//@[23:24) NewLine |\n|
+  params: {       
+//@[2:8) Identifier |params|
+//@[8:9) Colon |:|
+//@[10:11) LeftBrace |{|
+//@[18:19) NewLine |\n|
+    stringParamA: kv.getSecret('mySecret')
+//@[4:16) Identifier |stringParamA|
+//@[16:17) Colon |:|
+//@[18:20) Identifier |kv|
+//@[20:21) Dot |.|
+//@[21:30) Identifier |getSecret|
+//@[30:31) LeftParen |(|
+//@[31:41) StringComplete |'mySecret'|
+//@[41:42) RightParen |)|
+//@[42:43) NewLine |\n|
+    stringParamB: '${kv.getSecret('mySecret')}'
+//@[4:16) Identifier |stringParamB|
+//@[16:17) Colon |:|
+//@[18:21) StringLeftPiece |'${|
+//@[21:23) Identifier |kv|
+//@[23:24) Dot |.|
+//@[24:33) Identifier |getSecret|
+//@[33:34) LeftParen |(|
+//@[34:44) StringComplete |'mySecret'|
+//@[44:45) RightParen |)|
+//@[45:47) StringRightPiece |}'|
+//@[47:48) NewLine |\n|
+    objParam: kv.getSecret('mySecret')
+//@[4:12) Identifier |objParam|
+//@[12:13) Colon |:|
+//@[14:16) Identifier |kv|
+//@[16:17) Dot |.|
+//@[17:26) Identifier |getSecret|
+//@[26:27) LeftParen |(|
+//@[27:37) StringComplete |'mySecret'|
+//@[37:38) RightParen |)|
+//@[38:39) NewLine |\n|
+    arrayParam: kv.getSecret('mySecret')
+//@[4:14) Identifier |arrayParam|
+//@[14:15) Colon |:|
+//@[16:18) Identifier |kv|
+//@[18:19) Dot |.|
+//@[19:28) Identifier |getSecret|
+//@[28:29) LeftParen |(|
+//@[29:39) StringComplete |'mySecret'|
+//@[39:40) RightParen |)|
+//@[40:41) NewLine |\n|
+    secureStringParam: '${kv.getSecret('mySecret')}'
+//@[4:21) Identifier |secureStringParam|
+//@[21:22) Colon |:|
+//@[23:26) StringLeftPiece |'${|
+//@[26:28) Identifier |kv|
+//@[28:29) Dot |.|
+//@[29:38) Identifier |getSecret|
+//@[38:39) LeftParen |(|
+//@[39:49) StringComplete |'mySecret'|
+//@[49:50) RightParen |)|
+//@[50:52) StringRightPiece |}'|
+//@[52:53) NewLine |\n|
+    secureObjectParam: kv.getSecret('mySecret')
+//@[4:21) Identifier |secureObjectParam|
+//@[21:22) Colon |:|
+//@[23:25) Identifier |kv|
+//@[25:26) Dot |.|
+//@[26:35) Identifier |getSecret|
+//@[35:36) LeftParen |(|
+//@[36:46) StringComplete |'mySecret'|
+//@[46:47) RightParen |)|
+//@[47:48) NewLine |\n|
+    secureStringParam2: '${kv.getSecret('mySecret')}'
+//@[4:22) Identifier |secureStringParam2|
+//@[22:23) Colon |:|
+//@[24:27) StringLeftPiece |'${|
+//@[27:29) Identifier |kv|
+//@[29:30) Dot |.|
+//@[30:39) Identifier |getSecret|
+//@[39:40) LeftParen |(|
+//@[40:50) StringComplete |'mySecret'|
+//@[50:51) RightParen |)|
+//@[51:53) StringRightPiece |}'|
+//@[53:54) NewLine |\n|
+    secureObjectParam2: kv.getSecret('mySecret')
+//@[4:22) Identifier |secureObjectParam2|
+//@[22:23) Colon |:|
+//@[24:26) Identifier |kv|
+//@[26:27) Dot |.|
+//@[27:36) Identifier |getSecret|
+//@[36:37) LeftParen |(|
+//@[37:47) StringComplete |'mySecret'|
+//@[47:48) RightParen |)|
+//@[48:49) NewLine |\n|
+  }
+//@[2:3) RightBrace |}|
+//@[3:4) NewLine |\n|
+}
+//@[0:1) RightBrace |}|
+//@[1:3) NewLine |\n\n|
+
+module secureModule2 'BAD_MODULE_PATH.bicep' = {
+//@[0:6) Identifier |module|
+//@[7:20) Identifier |secureModule2|
+//@[21:44) StringComplete |'BAD_MODULE_PATH.bicep'|
+//@[45:46) Assignment |=|
+//@[47:48) LeftBrace |{|
+//@[48:49) NewLine |\n|
+  name: 'secureModule2'
+//@[2:6) Identifier |name|
+//@[6:7) Colon |:|
+//@[8:23) StringComplete |'secureModule2'|
+//@[23:24) NewLine |\n|
+  params: {       
+//@[2:8) Identifier |params|
+//@[8:9) Colon |:|
+//@[10:11) LeftBrace |{|
+//@[18:19) NewLine |\n|
+    secret: kv.getSecret('mySecret')
+//@[4:10) Identifier |secret|
+//@[10:11) Colon |:|
+//@[12:14) Identifier |kv|
+//@[14:15) Dot |.|
+//@[15:24) Identifier |getSecret|
+//@[24:25) LeftParen |(|
+//@[25:35) StringComplete |'mySecret'|
+//@[35:36) RightParen |)|
+//@[36:37) NewLine |\n|
+  }
+//@[2:3) RightBrace |}|
+//@[3:4) NewLine |\n|
+}
+//@[0:1) RightBrace |}|
+//@[1:3) NewLine |\n\n|
+
+module issue3000 'empty.bicep' = {
+//@[0:6) Identifier |module|
+//@[7:16) Identifier |issue3000|
+//@[17:30) StringComplete |'empty.bicep'|
+//@[31:32) Assignment |=|
+//@[33:34) LeftBrace |{|
+//@[34:35) NewLine |\n|
+  name: 'issue3000Module'
+//@[2:6) Identifier |name|
+//@[6:7) Colon |:|
+//@[8:25) StringComplete |'issue3000Module'|
+//@[25:26) NewLine |\n|
+  params: {}
+//@[2:8) Identifier |params|
+//@[8:9) Colon |:|
+//@[10:11) LeftBrace |{|
+//@[11:12) RightBrace |}|
+//@[12:13) NewLine |\n|
+  identity: {
+//@[2:10) Identifier |identity|
+//@[10:11) Colon |:|
+//@[12:13) LeftBrace |{|
+//@[13:14) NewLine |\n|
+    type: 'SystemAssigned'
+//@[4:8) Identifier |type|
+//@[8:9) Colon |:|
+//@[10:26) StringComplete |'SystemAssigned'|
+//@[26:27) NewLine |\n|
+  }
+//@[2:3) RightBrace |}|
+//@[3:4) NewLine |\n|
+  extendedLocation: {}
+//@[2:18) Identifier |extendedLocation|
+//@[18:19) Colon |:|
+//@[20:21) LeftBrace |{|
+//@[21:22) RightBrace |}|
+//@[22:23) NewLine |\n|
+  sku: {}
+//@[2:5) Identifier |sku|
+//@[5:6) Colon |:|
+//@[7:8) LeftBrace |{|
+//@[8:9) RightBrace |}|
+//@[9:10) NewLine |\n|
+  kind: 'V1'
+//@[2:6) Identifier |kind|
+//@[6:7) Colon |:|
+//@[8:12) StringComplete |'V1'|
+//@[12:13) NewLine |\n|
+  managedBy: 'string'
+//@[2:11) Identifier |managedBy|
+//@[11:12) Colon |:|
+//@[13:21) StringComplete |'string'|
+//@[21:22) NewLine |\n|
+  mangedByExtended: [
+//@[2:18) Identifier |mangedByExtended|
+//@[18:19) Colon |:|
+//@[20:21) LeftSquare |[|
+//@[21:22) NewLine |\n|
+   'str1'
+//@[3:9) StringComplete |'str1'|
+//@[9:10) NewLine |\n|
+   'str2'
+//@[3:9) StringComplete |'str2'|
+//@[9:10) NewLine |\n|
+  ]
+//@[2:3) RightSquare |]|
+//@[3:4) NewLine |\n|
+  zones: [
+//@[2:7) Identifier |zones|
+//@[7:8) Colon |:|
+//@[9:10) LeftSquare |[|
+//@[10:11) NewLine |\n|
+   'str1'
+//@[3:9) StringComplete |'str1'|
+//@[9:10) NewLine |\n|
+   'str2'
+//@[3:9) StringComplete |'str2'|
+//@[9:10) NewLine |\n|
+  ]
+//@[2:3) RightSquare |]|
+//@[3:4) NewLine |\n|
+  plan: {}
+//@[2:6) Identifier |plan|
+//@[6:7) Colon |:|
+//@[8:9) LeftBrace |{|
+//@[9:10) RightBrace |}|
+//@[10:11) NewLine |\n|
+  eTag: ''
+//@[2:6) Identifier |eTag|
+//@[6:7) Colon |:|
+//@[8:10) StringComplete |''|
+//@[10:11) NewLine |\n|
+  scale: {}  
+//@[2:7) Identifier |scale|
+//@[7:8) Colon |:|
+//@[9:10) LeftBrace |{|
+//@[10:11) RightBrace |}|
+//@[13:14) NewLine |\n|
+}
+//@[0:1) RightBrace |}|
+//@[1:3) NewLine |\n\n|
+
+module invalidJsonMod 'modulec.json' = {
+//@[0:6) Identifier |module|
+//@[7:21) Identifier |invalidJsonMod|
+//@[22:36) StringComplete |'modulec.json'|
+//@[37:38) Assignment |=|
+//@[39:40) LeftBrace |{|
+//@[40:41) NewLine |\n|
+}
+//@[0:1) RightBrace |}|
+//@[1:3) NewLine |\n\n|
+
+module jsonModMissingParam 'moduled.json' = {
+//@[0:6) Identifier |module|
+//@[7:26) Identifier |jsonModMissingParam|
+//@[27:41) StringComplete |'moduled.json'|
+//@[42:43) Assignment |=|
+//@[44:45) LeftBrace |{|
+//@[45:46) NewLine |\n|
+  name: 'jsonModMissingParam'
+//@[2:6) Identifier |name|
+//@[6:7) Colon |:|
+//@[8:29) StringComplete |'jsonModMissingParam'|
+//@[29:30) NewLine |\n|
+  params: {
+//@[2:8) Identifier |params|
+//@[8:9) Colon |:|
+//@[10:11) LeftBrace |{|
+//@[11:12) NewLine |\n|
+    foo: 123
+//@[4:7) Identifier |foo|
+//@[7:8) Colon |:|
+//@[9:12) Integer |123|
+//@[12:13) NewLine |\n|
+    baz: 'C'
+//@[4:7) Identifier |baz|
+//@[7:8) Colon |:|
+//@[9:12) StringComplete |'C'|
+//@[12:13) NewLine |\n|
+  }
+//@[2:3) RightBrace |}|
+//@[3:4) NewLine |\n|
+}
+//@[0:1) RightBrace |}|
+//@[1:2) NewLine |\n|
 
 //@[0:0) EndOfFile ||

@@ -256,10 +256,10 @@ namespace Bicep.Core.Emit
                 case ResourceScope.Resource:
                     if (scopeData.ResourceScopeSymbol is null)
                     {
-                        throw new InvalidOperationException($"Cannot format resourceId with non-null resource scope symbol");
+                        throw new InvalidOperationException("Cannot format resourceId with non-null resource scope symbol");
                     }
 
-                    var parentTypeReference = EmitHelpers.GetTypeReference(scopeData.ResourceScopeSymbol);
+                    var parentTypeReference = scopeData.ResourceScopeSymbol.GetResourceTypeReference();
                     var parentResourceId = FormatFullyQualifiedResourceId(
                         context,
                         converter,
@@ -288,10 +288,10 @@ namespace Bicep.Core.Emit
                 case ResourceScope.Resource:
                     if (scopeData.ResourceScopeSymbol is null)
                     {
-                        throw new InvalidOperationException($"Cannot format resourceId with non-null resource scope symbol");
+                        throw new InvalidOperationException("Cannot format resourceId with non-null resource scope symbol");
                     }
 
-                    var parentTypeReference = EmitHelpers.GetTypeReference(scopeData.ResourceScopeSymbol);
+                    var parentTypeReference = scopeData.ResourceScopeSymbol.GetResourceTypeReference();
                     var parentResourceId = FormatUnqualifiedResourceId(
                         context,
                         converter,
@@ -332,8 +332,8 @@ namespace Bicep.Core.Emit
                 case ResourceScope.ManagementGroup:
                     if (scopeData.ManagementGroupNameProperty != null)
                     {
-                        // The template engine expects an unqualified resourceId for the management group scope if deploying at tenant scope
-                        var useFullyQualifiedResourceId = targetScope != ResourceScope.Tenant;
+                        // The template engine expects an unqualified resourceId for the management group scope if deploying at tenant or management group scope
+                        var useFullyQualifiedResourceId = targetScope != ResourceScope.Tenant && targetScope != ResourceScope.ManagementGroup;
                         expressionEmitter.EmitProperty("scope", expressionEmitter.GetManagementGroupResourceId(scopeData.ManagementGroupNameProperty, useFullyQualifiedResourceId));
                     }
                     return;

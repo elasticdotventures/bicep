@@ -480,6 +480,23 @@
     }
   },
   {
+    "label": "kv",
+    "kind": "interface",
+    "detail": "kv",
+    "deprecated": false,
+    "preselect": false,
+    "sortText": "2_kv",
+    "insertTextFormat": "plainText",
+    "insertTextMode": "adjustIndentation",
+    "textEdit": {
+      "range": {},
+      "newText": "kv"
+    },
+    "commitCharacters": [
+      ":"
+    ]
+  },
+  {
     "label": "last",
     "kind": "function",
     "detail": "last()",
@@ -525,6 +542,40 @@
     "textEdit": {
       "range": {},
       "newText": "length($0)"
+    },
+    "command": {
+      "command": "editor.action.triggerParameterHints"
+    }
+  },
+  {
+    "label": "loadFileAsBase64",
+    "kind": "function",
+    "detail": "loadFileAsBase64()",
+    "deprecated": false,
+    "preselect": false,
+    "sortText": "3_loadFileAsBase64",
+    "insertTextFormat": "snippet",
+    "insertTextMode": "adjustIndentation",
+    "textEdit": {
+      "range": {},
+      "newText": "loadFileAsBase64($0)"
+    },
+    "command": {
+      "command": "editor.action.triggerParameterHints"
+    }
+  },
+  {
+    "label": "loadTextContent",
+    "kind": "function",
+    "detail": "loadTextContent()",
+    "deprecated": false,
+    "preselect": false,
+    "sortText": "3_loadTextContent",
+    "insertTextFormat": "snippet",
+    "insertTextMode": "adjustIndentation",
+    "textEdit": {
+      "range": {},
+      "newText": "loadTextContent($0)"
     },
     "command": {
       "command": "editor.action.triggerParameterHints"

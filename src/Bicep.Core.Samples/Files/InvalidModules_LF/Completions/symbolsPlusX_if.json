@@ -959,6 +959,34 @@
     }
   },
   {
+    "label": "invalidJsonMod",
+    "kind": "module",
+    "detail": "invalidJsonMod",
+    "deprecated": false,
+    "preselect": false,
+    "sortText": "2_invalidJsonMod",
+    "insertTextFormat": "plainText",
+    "insertTextMode": "adjustIndentation",
+    "textEdit": {
+      "range": {},
+      "newText": "invalidJsonMod"
+    }
+  },
+  {
+    "label": "issue3000",
+    "kind": "module",
+    "detail": "issue3000",
+    "deprecated": false,
+    "preselect": false,
+    "sortText": "2_issue3000",
+    "insertTextFormat": "plainText",
+    "insertTextMode": "adjustIndentation",
+    "textEdit": {
+      "range": {},
+      "newText": "issue3000"
+    }
+  },
+  {
     "label": "json",
     "kind": "function",
     "detail": "json()",
@@ -974,6 +1002,37 @@
     "command": {
       "command": "editor.action.triggerParameterHints"
     }
+  },
+  {
+    "label": "jsonModMissingParam",
+    "kind": "module",
+    "detail": "jsonModMissingParam",
+    "deprecated": false,
+    "preselect": false,
+    "sortText": "2_jsonModMissingParam",
+    "insertTextFormat": "plainText",
+    "insertTextMode": "adjustIndentation",
+    "textEdit": {
+      "range": {},
+      "newText": "jsonModMissingParam"
+    }
+  },
+  {
+    "label": "kv",
+    "kind": "interface",
+    "detail": "kv",
+    "deprecated": false,
+    "preselect": false,
+    "sortText": "2_kv",
+    "insertTextFormat": "plainText",
+    "insertTextMode": "adjustIndentation",
+    "textEdit": {
+      "range": {},
+      "newText": "kv"
+    },
+    "commitCharacters": [
+      ":"
+    ]
   },
   {
     "label": "last",
@@ -1027,17 +1086,34 @@
     }
   },
   {
-    "label": "listKeys",
+    "label": "loadFileAsBase64",
     "kind": "function",
-    "detail": "listKeys()",
+    "detail": "loadFileAsBase64()",
     "deprecated": false,
     "preselect": false,
-    "sortText": "3_listKeys",
+    "sortText": "3_loadFileAsBase64",
     "insertTextFormat": "snippet",
     "insertTextMode": "adjustIndentation",
     "textEdit": {
       "range": {},
-      "newText": "listKeys($0)"
+      "newText": "loadFileAsBase64($0)"
+    },
+    "command": {
+      "command": "editor.action.triggerParameterHints"
+    }
+  },
+  {
+    "label": "loadTextContent",
+    "kind": "function",
+    "detail": "loadTextContent()",
+    "deprecated": false,
+    "preselect": false,
+    "sortText": "3_loadTextContent",
+    "insertTextFormat": "snippet",
+    "insertTextMode": "adjustIndentation",
+    "textEdit": {
+      "range": {},
+      "newText": "loadTextContent($0)"
     },
     "command": {
       "command": "editor.action.triggerParameterHints"
@@ -1655,6 +1731,20 @@
     }
   },
   {
+    "label": "moduleWithPath",
+    "kind": "module",
+    "detail": "moduleWithPath",
+    "deprecated": false,
+    "preselect": false,
+    "sortText": "2_moduleWithPath",
+    "insertTextFormat": "plainText",
+    "insertTextMode": "adjustIndentation",
+    "textEdit": {
+      "range": {},
+      "newText": "moduleWithPath"
+    }
+  },
+  {
     "label": "moduleWithSelfCycle",
     "kind": "module",
     "detail": "moduleWithSelfCycle",
@@ -2128,6 +2218,34 @@
     "commitCharacters": [
       ":"
     ]
+  },
+  {
+    "label": "secureModule1",
+    "kind": "module",
+    "detail": "secureModule1",
+    "deprecated": false,
+    "preselect": false,
+    "sortText": "2_secureModule1",
+    "insertTextFormat": "plainText",
+    "insertTextMode": "adjustIndentation",
+    "textEdit": {
+      "range": {},
+      "newText": "secureModule1"
+    }
+  },
+  {
+    "label": "secureModule2",
+    "kind": "module",
+    "detail": "secureModule2",
+    "deprecated": false,
+    "preselect": false,
+    "sortText": "2_secureModule2",
+    "insertTextFormat": "plainText",
+    "insertTextMode": "adjustIndentation",
+    "textEdit": {
+      "range": {},
+      "newText": "secureModule2"
+    }
   },
   {
     "label": "singleModuleForRuntimeCheck",

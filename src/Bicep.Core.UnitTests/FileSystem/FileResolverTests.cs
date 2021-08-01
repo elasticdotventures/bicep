@@ -8,6 +8,7 @@ using Bicep.Core.FileSystem;
 using Bicep.Core.UnitTests.Utils;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Text;
 
 namespace Bicep.Core.UnitTests.FileSystem
 {
@@ -19,28 +20,28 @@ namespace Bicep.Core.UnitTests.FileSystem
         public void TryResolveModulePath_should_return_expected_results(string parentFilePath, string childFilePath, string? expectedResult)
         {
             var fileResolver = new FileResolver();
-            fileResolver.TryResolveModulePath(new Uri(parentFilePath), childFilePath).Should().Be(expectedResult != null ? new Uri(expectedResult) : null, $"{nameof(fileResolver.TryResolveModulePath)}(\"{parentFilePath}\", \"{childFilePath}\") should produce expected result");
+            fileResolver.TryResolveFilePath(new Uri(parentFilePath), childFilePath).Should().Be(expectedResult != null ? new Uri(expectedResult) : null, $"{nameof(fileResolver.TryResolveFilePath)}(\"{parentFilePath}\", \"{childFilePath}\") should produce expected result");
         }
 
         private static IEnumerable<object?[]> TryResolveModulePathData()
         {
             if (CompilerFlags.IsWindowsBuild)
             {
-                yield return new [] { "file:///C:/abc/file.bicep", "def/ghi.bicep", "file:///C:/abc/def/ghi.bicep", };
-                yield return new [] { "file:///C:/abc/file.bicep", "./def/ghi.bicep", "file:///C:/abc/def/ghi.bicep", };
-                yield return new [] { "file:///C:/abc/file.bicep", "../ghi.bicep", "file:///C:/ghi.bicep", }; // directory is resolved relative to parent path
-                yield return new [] { "file:///C:/abc/file.bicep", "./def/../ghi.bicep", "file:///C:/abc/ghi.bicep", }; // directory is resolved
-                yield return new [] { "file:///D:/abc/file.bicep", "/def.bicep", "file:///D:/def.bicep", }; // root child path is used as-is
-                yield return new [] { "file:///E:/abc/file.bicep", "/abc/../def/../ghi.bicep", "file:///E:/ghi.bicep", }; // root child path is used as-is with normalization
+                yield return new[] { "file:///C:/abc/file.bicep", "def/ghi.bicep", "file:///C:/abc/def/ghi.bicep", };
+                yield return new[] { "file:///C:/abc/file.bicep", "./def/ghi.bicep", "file:///C:/abc/def/ghi.bicep", };
+                yield return new[] { "file:///C:/abc/file.bicep", "../ghi.bicep", "file:///C:/ghi.bicep", }; // directory is resolved relative to parent path
+                yield return new[] { "file:///C:/abc/file.bicep", "./def/../ghi.bicep", "file:///C:/abc/ghi.bicep", }; // directory is resolved
+                yield return new[] { "file:///D:/abc/file.bicep", "/def.bicep", "file:///D:/def.bicep", }; // root child path is used as-is
+                yield return new[] { "file:///E:/abc/file.bicep", "/abc/../def/../ghi.bicep", "file:///E:/ghi.bicep", }; // root child path is used as-is with normalization
             }
             else
             {
-                yield return new [] { "file:///abc/file.bicep", "def/ghi.bicep", "file:///abc/def/ghi.bicep", };
-                yield return new [] { "file:///abc/file.bicep", "./def/ghi.bicep", "file:///abc/def/ghi.bicep", };
-                yield return new [] { "file:///abc/file.bicep", "../ghi.bicep", "file:///ghi.bicep", }; // directory is resolved relative to parent path
-                yield return new [] { "file:///abc/file.bicep", "./def/../ghi.bicep", "file:///abc/ghi.bicep", }; // directory is resolved
-                yield return new [] { "file:///abc/file.bicep", "/def.bicep", "file:///def.bicep", }; // root child path is used as-is
-                yield return new [] { "file:///abc/file.bicep", "/abc/../def/../ghi.bicep", "file:///ghi.bicep", }; // root child path is used as-is with normalization
+                yield return new[] { "file:///abc/file.bicep", "def/ghi.bicep", "file:///abc/def/ghi.bicep", };
+                yield return new[] { "file:///abc/file.bicep", "./def/ghi.bicep", "file:///abc/def/ghi.bicep", };
+                yield return new[] { "file:///abc/file.bicep", "../ghi.bicep", "file:///ghi.bicep", }; // directory is resolved relative to parent path
+                yield return new[] { "file:///abc/file.bicep", "./def/../ghi.bicep", "file:///abc/ghi.bicep", }; // directory is resolved
+                yield return new[] { "file:///abc/file.bicep", "/def.bicep", "file:///def.bicep", }; // root child path is used as-is
+                yield return new[] { "file:///abc/file.bicep", "/abc/../def/../ghi.bicep", "file:///ghi.bicep", }; // root child path is used as-is with normalization
             }
         }
 
@@ -53,7 +54,7 @@ namespace Bicep.Core.UnitTests.FileSystem
 
             File.WriteAllText(tempFile, "abcd\r\ndef");
             fileResolver.TryRead(tempFileUri, out var fileContents, out var failureMessage).Should().BeTrue();
-            fileContents.Should().Equals("abc\r\ndef");
+            fileContents.Should().Be("abcd\r\ndef");
             failureMessage.Should().BeNull();
 
             File.Delete(tempFile);
@@ -64,7 +65,56 @@ namespace Bicep.Core.UnitTests.FileSystem
         }
 
         [TestMethod]
-        [ExpectedException(typeof(IOException), AllowDerivedTypes=true)]
+        public void TryReadWithLimit_should_return_expected_results()
+        {
+            var fileResolver = new FileResolver();
+            var tempFile = Path.Combine(Path.GetTempPath(), $"BICEP_TEST_{Guid.NewGuid()}");
+            var tempFileUri = PathHelper.FilePathToFileUrl(tempFile);
+
+            File.WriteAllText(tempFile, "abcd\r\ndef");
+
+            fileResolver.TryRead(tempFileUri, out var fileContents, out var failureMessage, Encoding.UTF8, 6, out var _).Should().BeFalse();
+            fileContents.Should().BeNull();
+            failureMessage.Should().NotBeNull();
+            Core.Diagnostics.DiagnosticBuilder.DiagnosticBuilderInternal diag = new(new Core.Parsing.TextSpan(0, 5));
+            var err = failureMessage!.Invoke(diag);
+            err.Message.Should().Contain($"6 characters");
+
+            File.Delete(tempFile);
+
+            fileResolver.TryRead(tempFileUri, out fileContents, out failureMessage, Encoding.UTF8, 6, out var _).Should().BeFalse();
+            fileContents.Should().BeNull();
+            failureMessage.Should().NotBeNull();
+        }
+
+        [TestMethod]
+        public void TryReadAsBase64_should_return_expected_results()
+        {
+            var fileResolver = new FileResolver();
+            var tempFile = Path.Combine(Path.GetTempPath(), $"BICEP_TEST_{Guid.NewGuid()}");
+            var tempFileUri = PathHelper.FilePathToFileUrl(tempFile);
+
+            File.WriteAllText(tempFile, "abcd\r\ndef\r\n\r\nghi");
+            fileResolver.TryReadAsBase64(tempFileUri, out var fileContents, out var failureMessage).Should().BeTrue();
+            fileContents.Should().Equals("YWJjZA0KZGVmDQoNCmdoaQ==");
+            failureMessage.Should().BeNull();
+
+            fileResolver.TryReadAsBase64(tempFileUri, out fileContents, out failureMessage, 8).Should().BeFalse();
+            fileContents.Should().BeNull();
+            failureMessage.Should().NotBeNull();
+            Core.Diagnostics.DiagnosticBuilder.DiagnosticBuilderInternal diag = new(new Core.Parsing.TextSpan(0, 5));
+            var err = failureMessage!.Invoke(diag);
+            err.Message.Should().Contain($"{8 / 4 * 3} bytes");
+
+            File.Delete(tempFile);
+
+            fileResolver.TryReadAsBase64(tempFileUri, out fileContents, out failureMessage).Should().BeFalse();
+            fileContents.Should().BeNull();
+            failureMessage.Should().NotBeNull();
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(IOException), AllowDerivedTypes = true)]
         public void GetDirectories_should_return_expected_results()
         {
             var fileResolver = new FileResolver();
@@ -88,7 +138,7 @@ namespace Bicep.Core.UnitTests.FileSystem
         }
 
         [TestMethod]
-        [ExpectedException(typeof(IOException), AllowDerivedTypes=true)]
+        [ExpectedException(typeof(IOException), AllowDerivedTypes = true)]
         public void GetFiles_should_return_expected_results()
         {
             var fileResolver = new FileResolver();
@@ -130,6 +180,25 @@ namespace Bicep.Core.UnitTests.FileSystem
             // make child dir
             Directory.CreateDirectory(tempChildDir);
             fileResolver.TryDirExists(PathHelper.FilePathToFileUrl(tempChildDir)).Should().BeTrue();
+        }
+
+        [DataTestMethod]
+        [DataRow("", 2, true, "")]
+        [DataRow("a", 2, true, "a")]
+        [DataRow("aa", 2, true, "aa")]
+        [DataRow("aaaa\nbbbbb", 2, true, "aa")]
+        public void TryReadAtMostNCharacters_RegardlessFileContentLength_ReturnsAtMostNCharaters(string fileContents, int n, bool expectedResult, string expectedContents)
+        {
+            var fileResolver = new FileResolver();
+            var tempFile = Path.Combine(Path.GetTempPath(), $"BICEP_TEST_{Guid.NewGuid()}");
+            var tempFileUri = PathHelper.FilePathToFileUrl(tempFile);
+
+            File.WriteAllText(tempFile, fileContents);
+
+            var result = fileResolver.TryReadAtMostNCharaters(tempFileUri, Encoding.UTF8, n, out var readContents);
+
+            result.Should().Be(expectedResult);
+            readContents.Should().Be(expectedContents);
         }
     }
 }

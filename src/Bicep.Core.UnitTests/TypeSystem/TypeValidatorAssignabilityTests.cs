@@ -5,10 +5,12 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using Bicep.Core.Diagnostics;
+using Bicep.Core.FileSystem;
 using Bicep.Core.Resources;
 using Bicep.Core.Semantics;
 using Bicep.Core.Syntax;
 using Bicep.Core.TypeSystem;
+using Bicep.Core.UnitTests.Assertions;
 using Bicep.Core.UnitTests.Utils;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -104,7 +106,7 @@ namespace Bicep.Core.UnitTests.TypeSystem
 
             TypeValidator.AreTypesAssignable(LanguageConstants.Int, union).Should().BeTrue();
             TypeValidator.AreTypesAssignable(LanguageConstants.Bool, union).Should().BeTrue();
-            
+
             TypeValidator.AreTypesAssignable(LanguageConstants.String, union).Should().BeFalse();
             TypeValidator.AreTypesAssignable(UnionType.Create(LanguageConstants.String, LanguageConstants.Null), union).Should().BeFalse();
         }
@@ -205,10 +207,9 @@ namespace Bicep.Core.UnitTests.TypeSystem
             var hierarchy = new SyntaxHierarchy();
             hierarchy.AddRoot(@object);
 
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), @object, LanguageConstants.Object, diagnosticWriter);
+            var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, @object, LanguageConstants.Object);
 
-            diagnosticWriter.GetDiagnostics().Should().BeEmpty();
+            diagnostics.Should().BeEmpty();
         }
 
         [DataTestMethod]
@@ -218,48 +219,10 @@ namespace Bicep.Core.UnitTests.TypeSystem
             var hierarchy = new SyntaxHierarchy();
             hierarchy.AddRoot(@object);
 
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), @object, LanguageConstants.Int, diagnosticWriter);
+            var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, @object, LanguageConstants.Int);
 
-            diagnosticWriter.GetDiagnostics().Should().HaveCount(1);
-            diagnosticWriter.GetDiagnostics().Single().Message.Should().Be("Expected a value of type \"int\" but the provided value is of type \"object\".");
-        }
-
-        [TestMethod]
-        public void EmptyModifierIsValid()
-        {
-            var obj = TestSyntaxFactory.CreateObject(new ObjectPropertySyntax[0]);
-            
-            var hierarchy = new SyntaxHierarchy();
-            hierarchy.AddRoot(obj);
-
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, LanguageConstants.CreateParameterModifierType(LanguageConstants.Int, LanguageConstants.Int), diagnosticWriter);
-
-            diagnosticWriter.GetDiagnostics().Should().BeEmpty();
-        }
-
-        [TestMethod]
-        public void ParameterModifierShouldRejectAdditionalProperties()
-        {
-            var obj = TestSyntaxFactory.CreateObject(new []
-            {
-                TestSyntaxFactory.CreateProperty("extra", TestSyntaxFactory.CreateString("foo")),
-                TestSyntaxFactory.CreateProperty("extra2", TestSyntaxFactory.CreateString("foo"))
-            });
-
-            var hierarchy = new SyntaxHierarchy();
-            hierarchy.AddRoot(obj);
-
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, LanguageConstants.CreateParameterModifierType(LanguageConstants.String, LanguageConstants.String), diagnosticWriter);
-
-            diagnosticWriter.GetDiagnostics()
-                .Select(e => e.Message)
-                .Should()
-                .Equal(
-                    "The property \"extra\" is not allowed on objects of type \"ParameterModifier<string>\". Permissible properties include \"allowed\", \"default\", \"maxLength\", \"metadata\", \"minLength\", \"secure\".",
-                    "The property \"extra2\" is not allowed on objects of type \"ParameterModifier<string>\". Permissible properties include \"allowed\", \"default\", \"maxLength\", \"metadata\", \"minLength\", \"secure\".");
+            diagnostics.Should().HaveCount(1);
+            diagnostics.Single().Message.Should().Be("Expected a value of type \"int\" but the provided value is of type \"object\".");
         }
 
         [TestMethod]
@@ -273,10 +236,9 @@ namespace Bicep.Core.UnitTests.TypeSystem
             var hierarchy = new SyntaxHierarchy();
             hierarchy.AddRoot(obj);
 
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, CreateDummyResourceType(), diagnosticWriter);
+            var (_, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, obj, CreateDummyResourceType());
 
-            diagnosticWriter.GetDiagnostics().Should().BeEmpty();
+            diagnostics.Should().BeEmpty();
         }
 
         [TestMethod]
@@ -295,9 +257,8 @@ namespace Bicep.Core.UnitTests.TypeSystem
             var hierarchy = new SyntaxHierarchy();
             hierarchy.AddRoot(obj);
 
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, CreateDummyResourceType(), diagnosticWriter);
-            diagnosticWriter.GetDiagnostics().Should().BeEmpty();
+            var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, obj, CreateDummyResourceType());
+            diagnostics.Should().BeEmpty();
         }
 
         [TestMethod]
@@ -321,15 +282,13 @@ namespace Bicep.Core.UnitTests.TypeSystem
             var hierarchy = new SyntaxHierarchy();
             hierarchy.AddRoot(obj);
 
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, CreateDummyResourceType(), diagnosticWriter);
+            var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, obj, CreateDummyResourceType());
 
-            diagnosticWriter.GetDiagnostics()
-                .Select(d => d.Message)
-                .Should().BeEquivalentTo(
-                    "The enclosing array expected an item of type \"string\", but the provided item was of type \"bool\".",
-                    "The property \"managedByExtended\" expected a value of type \"string[]\" but the provided value is of type \"'not an array'\".",
-                    "The enclosing array expected an item of type \"string\", but the provided item was of type \"int\".");
+            diagnostics.OrderBy(x => x.Message).Should().HaveDiagnostics(new[] {
+                ("BCP034", DiagnosticLevel.Error, "The enclosing array expected an item of type \"string\", but the provided item was of type \"bool\"."),
+                ("BCP034", DiagnosticLevel.Error, "The enclosing array expected an item of type \"string\", but the provided item was of type \"int\"."),
+                ("BCP036", DiagnosticLevel.Error, "The property \"managedByExtended\" expected a value of type \"string[]\" but the provided value is of type \"'not an array'\"."),
+            });
         }
 
         [TestMethod]
@@ -340,17 +299,16 @@ namespace Bicep.Core.UnitTests.TypeSystem
             var hierarchy = new SyntaxHierarchy();
             hierarchy.AddRoot(obj);
 
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, CreateDummyResourceType(), diagnosticWriter);
+            var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, obj, CreateDummyResourceType());
 
-            diagnosticWriter.GetDiagnostics().Should().HaveCount(1);
-            diagnosticWriter.GetDiagnostics().Single().Message.Should().Be("The specified \"object\" declaration is missing the following required properties: \"name\".");
+            diagnostics.Should().HaveCount(1);
+            diagnostics.Single().Message.Should().Be("The specified \"object\" declaration is missing the following required properties: \"name\".");
         }
 
         [TestMethod]
         public void RequiredPropertyWithParseErrorsShouldProduceNoErrors()
         {
-            var obj = TestSyntaxFactory.CreateObject(new []
+            var obj = TestSyntaxFactory.CreateObject(new[]
             {
                 TestSyntaxFactory.CreateProperty("dupe", TestSyntaxFactory.CreateString("a")),
                 TestSyntaxFactory.CreateProperty("dupe", TestSyntaxFactory.CreateString("a"))
@@ -359,10 +317,9 @@ namespace Bicep.Core.UnitTests.TypeSystem
             var hierarchy = new SyntaxHierarchy();
             hierarchy.AddRoot(obj);
 
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, CreateDummyResourceType(), diagnosticWriter);
+            var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, obj, CreateDummyResourceType());
 
-            diagnosticWriter.GetDiagnostics().Should().BeEmpty();
+            diagnostics.Should().BeEmpty();
         }
 
         [TestMethod]
@@ -381,15 +338,12 @@ namespace Bicep.Core.UnitTests.TypeSystem
             var hierarchy = new SyntaxHierarchy();
             hierarchy.AddRoot(obj);
 
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, CreateDummyResourceType(), diagnosticWriter);
+            var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, obj, CreateDummyResourceType());
 
-            diagnosticWriter.GetDiagnostics()
-                .Select(d => d.Message)
-                .Should()
-                .BeEquivalentTo(
-                    "The property \"wrongTagType\" expected a value of type \"string\" but the provided value is of type \"bool\".",
-                    "The property \"wrongTagType2\" expected a value of type \"string\" but the provided value is of type \"int\".");
+            diagnostics.OrderBy(x => x.Message).Should().HaveDiagnostics(new[] {
+                ("BCP036", DiagnosticLevel.Error, "The property \"wrongTagType\" expected a value of type \"string\" but the provided value is of type \"bool\"."),
+                ("BCP036", DiagnosticLevel.Error, "The property \"wrongTagType2\" expected a value of type \"string\" but the provided value is of type \"int\"."),
+            });
         }
 
         [TestMethod]
@@ -408,462 +362,9 @@ namespace Bicep.Core.UnitTests.TypeSystem
             var hierarchy = new SyntaxHierarchy();
             hierarchy.AddRoot(obj);
 
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, CreateDummyResourceType(), diagnosticWriter);
-            
-            diagnosticWriter.GetDiagnostics().Should().BeEmpty();
-        }
+            var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, obj, CreateDummyResourceType());
 
-        [TestMethod]
-        public void ValidObjectParameterModifierShouldProduceNoDiagnostics()
-        {
-            var obj = TestSyntaxFactory.CreateObject(new[]
-            {
-                TestSyntaxFactory.CreateProperty("secure", TestSyntaxFactory.CreateBool(false)),
-                TestSyntaxFactory.CreateProperty("default", TestSyntaxFactory.CreateObject(new[]
-                {
-                    TestSyntaxFactory.CreateProperty("test", TestSyntaxFactory.CreateInt(333))
-                })),
-
-                TestSyntaxFactory.CreateProperty("allowed", TestSyntaxFactory.CreateArray(new[]
-                {
-                    TestSyntaxFactory.CreateArrayItem(TestSyntaxFactory.CreateObject(Enumerable.Empty<ObjectPropertySyntax>()))
-                })),
-
-                TestSyntaxFactory.CreateProperty("metadata", TestSyntaxFactory.CreateObject(new[]
-                {
-                    TestSyntaxFactory.CreateProperty("description", TestSyntaxFactory.CreateString("my description")),
-                    TestSyntaxFactory.CreateProperty("extra1", TestSyntaxFactory.CreateString("extra")),
-                    TestSyntaxFactory.CreateProperty("extra2", TestSyntaxFactory.CreateBool(true)),
-                    TestSyntaxFactory.CreateProperty("extra3", TestSyntaxFactory.CreateInt(100))
-                }))
-            });
-
-            var hierarchy = new SyntaxHierarchy();
-            hierarchy.AddRoot(obj);
-
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, LanguageConstants.CreateParameterModifierType(LanguageConstants.Object, LanguageConstants.Object), diagnosticWriter);
-
-            diagnosticWriter.GetDiagnostics().Should().BeEmpty();
-        }
-
-        [TestMethod]
-        public void ValidStringParameterModifierShouldProduceNoDiagnostics()
-        {
-            var obj = TestSyntaxFactory.CreateObject(new[]
-            {
-                TestSyntaxFactory.CreateProperty("secure", TestSyntaxFactory.CreateBool(false)),
-                TestSyntaxFactory.CreateProperty("default", TestSyntaxFactory.CreateString("One")),
-
-                TestSyntaxFactory.CreateProperty("allowed", TestSyntaxFactory.CreateArray(new []
-                {
-                    TestSyntaxFactory.CreateArrayItem(TestSyntaxFactory.CreateString("One")),
-                    TestSyntaxFactory.CreateArrayItem(TestSyntaxFactory.CreateString("Two")),
-                })),
-
-                TestSyntaxFactory.CreateProperty("minLength", TestSyntaxFactory.CreateInt(33)),
-                TestSyntaxFactory.CreateProperty("maxLength", TestSyntaxFactory.CreateInt(25)),
-
-                TestSyntaxFactory.CreateProperty("metadata", TestSyntaxFactory.CreateObject(new[]
-                {
-                    TestSyntaxFactory.CreateProperty("description", TestSyntaxFactory.CreateString("my description")),
-                    TestSyntaxFactory.CreateProperty("extra1", TestSyntaxFactory.CreateString("extra")),
-                    TestSyntaxFactory.CreateProperty("extra2", TestSyntaxFactory.CreateBool(true)),
-                    TestSyntaxFactory.CreateProperty("extra3", TestSyntaxFactory.CreateInt(100))
-                }))
-            });
-
-            var hierarchy = new SyntaxHierarchy();
-            hierarchy.AddRoot(obj);
-
-            var allowedValuesType = UnionType.Create(new StringLiteralType("One"), new StringLiteralType("Two"));
-
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, LanguageConstants.CreateParameterModifierType(LanguageConstants.String, allowedValuesType), diagnosticWriter);
-
-            diagnosticWriter.GetDiagnostics().Should().BeEmpty();
-        }
-
-        [TestMethod]
-        public void Valid_parameter_modifier_should_ensure_default_value_is_assignable_to_allowed_values()
-        {
-            var obj = TestSyntaxFactory.CreateObject(new[]
-            {
-                TestSyntaxFactory.CreateProperty("default", TestSyntaxFactory.CreateString("Three")),
-
-                TestSyntaxFactory.CreateProperty("allowed", TestSyntaxFactory.CreateArray(new []
-                {
-                    TestSyntaxFactory.CreateArrayItem(TestSyntaxFactory.CreateString("One")),
-                    TestSyntaxFactory.CreateArrayItem(TestSyntaxFactory.CreateString("Two")),
-                })),
-            });
-
-            var hierarchy = new SyntaxHierarchy();
-            hierarchy.AddRoot(obj);
-
-            var allowedValuesType = UnionType.Create(new StringLiteralType("One"), new StringLiteralType("Two"));
-
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, LanguageConstants.CreateParameterModifierType(LanguageConstants.String, allowedValuesType), diagnosticWriter);
-
-            diagnosticWriter.GetDiagnostics()
-                .Should().SatisfyRespectively(
-                    x => x.Message.Should().Be("The property \"default\" expected a value of type \"'One' | 'Two'\" but the provided value is of type \"'Three'\"."));
-        }
-
-        [TestMethod]
-        public void ValidIntParameterModifierShouldProduceNoDiagnostics()
-        {
-            var obj = TestSyntaxFactory.CreateObject(new[]
-            {
-                TestSyntaxFactory.CreateProperty("default", TestSyntaxFactory.CreateInt(324)),
-
-                TestSyntaxFactory.CreateProperty("allowed", TestSyntaxFactory.CreateArray(new []
-                {
-                    TestSyntaxFactory.CreateArrayItem(TestSyntaxFactory.CreateInt(13))
-                })),
-
-                TestSyntaxFactory.CreateProperty("minValue", TestSyntaxFactory.CreateInt(3)),
-                TestSyntaxFactory.CreateProperty("maxValue", TestSyntaxFactory.CreateInt(24)),
-
-                TestSyntaxFactory.CreateProperty("metadata", TestSyntaxFactory.CreateObject(new[]
-                {
-                    TestSyntaxFactory.CreateProperty("description", TestSyntaxFactory.CreateString("my description")),
-                    TestSyntaxFactory.CreateProperty("extra1", TestSyntaxFactory.CreateString("extra")),
-                    TestSyntaxFactory.CreateProperty("extra2", TestSyntaxFactory.CreateBool(true)),
-                    TestSyntaxFactory.CreateProperty("extra3", TestSyntaxFactory.CreateInt(100))
-                }))
-            });
-
-            var hierarchy = new SyntaxHierarchy();
-            hierarchy.AddRoot(obj);
-
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, LanguageConstants.CreateParameterModifierType(LanguageConstants.Int, LanguageConstants.Int), diagnosticWriter);
-
-            diagnosticWriter.GetDiagnostics().Should().BeEmpty();
-        }
-
-        [TestMethod]
-        public void ValidBoolParameterModifierShouldProduceNoDiagnostics()
-        {
-            var obj = TestSyntaxFactory.CreateObject(new[]
-            {
-                TestSyntaxFactory.CreateProperty("default", TestSyntaxFactory.CreateBool(true)),
-
-                TestSyntaxFactory.CreateProperty("allowed", TestSyntaxFactory.CreateArray(new []
-                {
-                    TestSyntaxFactory.CreateArrayItem(TestSyntaxFactory.CreateBool(false))
-                })),
-
-                TestSyntaxFactory.CreateProperty("metadata", TestSyntaxFactory.CreateObject(new[]
-                {
-                    TestSyntaxFactory.CreateProperty("description", TestSyntaxFactory.CreateString("my description")),
-                    TestSyntaxFactory.CreateProperty("extra1", TestSyntaxFactory.CreateString("extra")),
-                    TestSyntaxFactory.CreateProperty("extra2", TestSyntaxFactory.CreateBool(true)),
-                    TestSyntaxFactory.CreateProperty("extra3", TestSyntaxFactory.CreateInt(100))
-                }))
-            });
-
-            var hierarchy = new SyntaxHierarchy();
-            hierarchy.AddRoot(obj);
-
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, LanguageConstants.CreateParameterModifierType(LanguageConstants.Bool, LanguageConstants.Bool), diagnosticWriter);
-
-            diagnosticWriter.GetDiagnostics().Should().BeEmpty();
-        }
-
-        [TestMethod]
-        public void ValidArrayParameterModifierShouldProduceNoDiagnostics()
-        {
-            var obj = TestSyntaxFactory.CreateObject(new[]
-            {
-                TestSyntaxFactory.CreateProperty("default", TestSyntaxFactory.CreateArray(new []
-                {
-                    TestSyntaxFactory.CreateArrayItem(TestSyntaxFactory.CreateBool(true))
-                })),
-
-                TestSyntaxFactory.CreateProperty("allowed", TestSyntaxFactory.CreateArray(new []
-                {
-                    TestSyntaxFactory.CreateArrayItem(TestSyntaxFactory.CreateArray(Enumerable.Empty<ArrayItemSyntax>()))
-                })),
-
-                TestSyntaxFactory.CreateProperty("minLength", TestSyntaxFactory.CreateInt(33)),
-                TestSyntaxFactory.CreateProperty("maxLength", TestSyntaxFactory.CreateInt(25)),
-
-                TestSyntaxFactory.CreateProperty("metadata", TestSyntaxFactory.CreateObject(new[]
-                {
-                    TestSyntaxFactory.CreateProperty("description", TestSyntaxFactory.CreateString("my description")),
-                    TestSyntaxFactory.CreateProperty("extra1", TestSyntaxFactory.CreateString("extra")),
-                    TestSyntaxFactory.CreateProperty("extra2", TestSyntaxFactory.CreateBool(true)),
-                    TestSyntaxFactory.CreateProperty("extra3", TestSyntaxFactory.CreateInt(100))
-                }))
-            });
-
-            var hierarchy = new SyntaxHierarchy();
-            hierarchy.AddRoot(obj);
-
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, LanguageConstants.CreateParameterModifierType(LanguageConstants.Array, LanguageConstants.Array), diagnosticWriter);
-
-            diagnosticWriter.GetDiagnostics().Should().BeEmpty();
-        }
-
-        [TestMethod]
-        public void CompletelyInvalidStringParameterModifier_ShouldLogExpectedErrors()
-        {
-            var obj = TestSyntaxFactory.CreateObject(new[]
-            {
-                // not a bool
-                TestSyntaxFactory.CreateProperty("secure", TestSyntaxFactory.CreateInt(1)),
-
-                // default value of wrong type
-                TestSyntaxFactory.CreateProperty("default", TestSyntaxFactory.CreateBool(true)),
-
-                // not an array
-                TestSyntaxFactory.CreateProperty("allowed", TestSyntaxFactory.CreateObject(new ObjectPropertySyntax[0])),
-
-                // not ints
-                //TestSyntaxFactory.CreateProperty("minValue", TestSyntaxFactory.CreateBool(true)),
-                //TestSyntaxFactory.CreateProperty("maxValue", TestSyntaxFactory.CreateString("11")),
-                TestSyntaxFactory.CreateProperty("minLength", TestSyntaxFactory.CreateObject(new ObjectPropertySyntax[0])),
-                TestSyntaxFactory.CreateProperty("maxLength", TestSyntaxFactory.CreateBool(false)),
-
-                // extra property
-                TestSyntaxFactory.CreateProperty("extra", TestSyntaxFactory.CreateBool(false)),
-
-                TestSyntaxFactory.CreateProperty("metadata", TestSyntaxFactory.CreateObject(new[]
-                {
-                    // wrong type of description
-                    TestSyntaxFactory.CreateProperty("description", TestSyntaxFactory.CreateInt(155))
-                }))
-            });
-
-            var hierarchy = new SyntaxHierarchy();
-            hierarchy.AddRoot(obj);
-
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, LanguageConstants.CreateParameterModifierType(LanguageConstants.String, LanguageConstants.String), diagnosticWriter);
-
-            diagnosticWriter.GetDiagnostics()
-                .Select(d => d.Message)
-                .Should().BeEquivalentTo(
-                    "The property \"default\" expected a value of type \"string\" but the provided value is of type \"bool\".",
-                    "The property \"minLength\" expected a value of type \"int\" but the provided value is of type \"object\".",
-                    //"The property \"minValue\" expected a value of type \"int\" but the provided value is of type \"bool\".",
-                    //"The property \"maxValue\" expected a value of type \"int\" but the provided value is of type \"string\".",
-                    "The property \"secure\" expected a value of type \"bool\" but the provided value is of type \"int\".",
-                    "The property \"allowed\" expected a value of type \"string[]\" but the provided value is of type \"object\".",
-                    "The property \"maxLength\" expected a value of type \"int\" but the provided value is of type \"bool\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<string>\".",
-                    "The property \"description\" expected a value of type \"string\" but the provided value is of type \"int\".");
-        }
-
-        [TestMethod]
-        public void CompletelyInvalidIntParameterModifier_ShouldLogExpectedErrors()
-        {
-            var obj = TestSyntaxFactory.CreateObject(new[]
-            {
-                // not a bool
-                TestSyntaxFactory.CreateProperty("secure", TestSyntaxFactory.CreateInt(1)),
-
-                // default value of wrong type
-                TestSyntaxFactory.CreateProperty("default", TestSyntaxFactory.CreateBool(true)),
-
-                // not an array
-                TestSyntaxFactory.CreateProperty("allowed", TestSyntaxFactory.CreateObject(new ObjectPropertySyntax[0])),
-
-                // not ints
-                TestSyntaxFactory.CreateProperty("minValue", TestSyntaxFactory.CreateBool(true)),
-                TestSyntaxFactory.CreateProperty("maxValue", TestSyntaxFactory.CreateString("11")),
-                TestSyntaxFactory.CreateProperty("minLength", TestSyntaxFactory.CreateObject(new ObjectPropertySyntax[0])),
-                TestSyntaxFactory.CreateProperty("maxLength", TestSyntaxFactory.CreateBool(false)),
-
-                // extra property
-                TestSyntaxFactory.CreateProperty("extra", TestSyntaxFactory.CreateBool(false)),
-
-                TestSyntaxFactory.CreateProperty("metadata", TestSyntaxFactory.CreateObject(new[]
-                {
-                    // wrong type of description
-                    TestSyntaxFactory.CreateProperty("description", TestSyntaxFactory.CreateInt(155))
-                }))
-            });
-
-            var hierarchy = new SyntaxHierarchy();
-            hierarchy.AddRoot(obj);
-
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, LanguageConstants.CreateParameterModifierType(LanguageConstants.Int, LanguageConstants.Int), diagnosticWriter);
-
-            diagnosticWriter.GetDiagnostics()
-                .Select(d => d.Message)
-                .Should().BeEquivalentTo(
-                    "The property \"allowed\" expected a value of type \"int[]\" but the provided value is of type \"object\".",
-                    "The property \"minValue\" expected a value of type \"int\" but the provided value is of type \"bool\".",
-                    "The property \"default\" expected a value of type \"int\" but the provided value is of type \"bool\".",
-                    "The property \"maxValue\" expected a value of type \"int\" but the provided value is of type \"'11'\".",
-                    "The property \"description\" expected a value of type \"string\" but the provided value is of type \"int\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<int>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<int>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<int>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<int>\".");
-        }
-
-        [TestMethod]
-        public void CompletelyInvalidBoolParameterModifier_ShouldLogExpectedErrors()
-        {
-            var obj = TestSyntaxFactory.CreateObject(new[]
-            {
-                // not a bool and not allowed
-                TestSyntaxFactory.CreateProperty("secure", TestSyntaxFactory.CreateInt(1)),
-
-                // default value of wrong type
-                TestSyntaxFactory.CreateProperty("default", TestSyntaxFactory.CreateInt(1231)),
-
-                // not an array
-                TestSyntaxFactory.CreateProperty("allowed", TestSyntaxFactory.CreateArray(new []
-                {
-                    TestSyntaxFactory.CreateArrayItem(TestSyntaxFactory.CreateInt(22))
-                })),
-
-                // not allowed
-                TestSyntaxFactory.CreateProperty("minValue", TestSyntaxFactory.CreateBool(true)),
-                TestSyntaxFactory.CreateProperty("maxValue", TestSyntaxFactory.CreateString("11")),
-                TestSyntaxFactory.CreateProperty("minLength", TestSyntaxFactory.CreateObject(new ObjectPropertySyntax[0])),
-                TestSyntaxFactory.CreateProperty("maxLength", TestSyntaxFactory.CreateBool(false)),
-
-                // extra property
-                TestSyntaxFactory.CreateProperty("extra", TestSyntaxFactory.CreateBool(false)),
-
-                TestSyntaxFactory.CreateProperty("metadata", TestSyntaxFactory.CreateObject(new[]
-                {
-                    // wrong type of description
-                    TestSyntaxFactory.CreateProperty("description", TestSyntaxFactory.CreateInt(155))
-                }))
-            });
-
-            var hierarchy = new SyntaxHierarchy();
-            hierarchy.AddRoot(obj);
-
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, LanguageConstants.CreateParameterModifierType(LanguageConstants.Bool, LanguageConstants.Bool), diagnosticWriter);
-
-            diagnosticWriter.GetDiagnostics()
-                .Select(d => d.Message)
-                .Should().BeEquivalentTo(
-                    "The property \"default\" expected a value of type \"bool\" but the provided value is of type \"int\".",
-                    "The enclosing array expected an item of type \"bool\", but the provided item was of type \"int\".",
-                    "The property \"description\" expected a value of type \"string\" but the provided value is of type \"int\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<bool>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<bool>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<bool>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<bool>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<bool>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<bool>\".");
-        }
-
-        [TestMethod]
-        public void CompletelyInvalidObjectParameterModifier_ShouldLogExpectedErrors()
-        {
-            var obj = TestSyntaxFactory.CreateObject(new[]
-            {
-                // not a bool
-                TestSyntaxFactory.CreateProperty("secure", TestSyntaxFactory.CreateInt(1)),
-
-                // default value of wrong type
-                TestSyntaxFactory.CreateProperty("default", TestSyntaxFactory.CreateBool(true)),
-
-                // not an array
-                TestSyntaxFactory.CreateProperty("allowed", TestSyntaxFactory.CreateObject(new ObjectPropertySyntax[0])),
-
-                // not ints
-                TestSyntaxFactory.CreateProperty("minValue", TestSyntaxFactory.CreateBool(true)),
-                TestSyntaxFactory.CreateProperty("maxValue", TestSyntaxFactory.CreateString("11")),
-                TestSyntaxFactory.CreateProperty("minLength", TestSyntaxFactory.CreateObject(new ObjectPropertySyntax[0])),
-                TestSyntaxFactory.CreateProperty("maxLength", TestSyntaxFactory.CreateBool(false)),
-
-                // extra property
-                TestSyntaxFactory.CreateProperty("extra", TestSyntaxFactory.CreateBool(false)),
-
-                TestSyntaxFactory.CreateProperty("metadata", TestSyntaxFactory.CreateObject(new[]
-                {
-                    // wrong type of description
-                    TestSyntaxFactory.CreateProperty("description", TestSyntaxFactory.CreateInt(155))
-                }))
-            });
-
-            var hierarchy = new SyntaxHierarchy();
-            hierarchy.AddRoot(obj);
-
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, LanguageConstants.CreateParameterModifierType(LanguageConstants.Object, LanguageConstants.Object), diagnosticWriter);
-
-            diagnosticWriter.GetDiagnostics()
-                .Select(d => d.Message)
-                .Should()
-                .BeEquivalentTo(
-                    "The property \"secure\" expected a value of type \"bool\" but the provided value is of type \"int\".",
-                    "The property \"description\" expected a value of type \"string\" but the provided value is of type \"int\".",
-                    "The property \"allowed\" expected a value of type \"object[]\" but the provided value is of type \"object\".",
-                    "The property \"default\" expected a value of type \"object\" but the provided value is of type \"bool\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<object>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<object>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<object>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<object>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<object>\".");
-        }
-
-        [TestMethod]
-        public void CompletelyInvalidArrayParameterModifier_ShouldLogExpectedErrors()
-        {
-            var obj = TestSyntaxFactory.CreateObject(new[]
-            {
-                // not a bool
-                TestSyntaxFactory.CreateProperty("secure", TestSyntaxFactory.CreateInt(1)),
-
-                // default value of wrong type
-                TestSyntaxFactory.CreateProperty("default", TestSyntaxFactory.CreateBool(true)),
-
-                // not an array
-                TestSyntaxFactory.CreateProperty("allowed", TestSyntaxFactory.CreateObject(new ObjectPropertySyntax[0])),
-
-                // not ints
-                TestSyntaxFactory.CreateProperty("minValue", TestSyntaxFactory.CreateBool(true)),
-                TestSyntaxFactory.CreateProperty("maxValue", TestSyntaxFactory.CreateString("11")),
-                TestSyntaxFactory.CreateProperty("minLength", TestSyntaxFactory.CreateObject(new ObjectPropertySyntax[0])),
-                TestSyntaxFactory.CreateProperty("maxLength", TestSyntaxFactory.CreateBool(false)),
-
-                // extra property
-                TestSyntaxFactory.CreateProperty("extra", TestSyntaxFactory.CreateBool(false)),
-
-                TestSyntaxFactory.CreateProperty("metadata", TestSyntaxFactory.CreateObject(new[]
-                {
-                    // wrong type of description
-                    TestSyntaxFactory.CreateProperty("description", TestSyntaxFactory.CreateInt(155))
-                }))
-            });
-
-            var hierarchy = new SyntaxHierarchy();
-            hierarchy.AddRoot(obj);
-
-            var diagnosticWriter = ToListDiagnosticWriter.Create();
-            var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, LanguageConstants.CreateParameterModifierType(LanguageConstants.Array, LanguageConstants.Array), diagnosticWriter);
-
-            diagnosticWriter.GetDiagnostics()
-                .Select(d => d.Message)
-                .Should()
-                .BeEquivalentTo(
-                    "The property \"default\" expected a value of type \"array\" but the provided value is of type \"bool\".",
-                    "The property \"maxLength\" expected a value of type \"int\" but the provided value is of type \"bool\".",
-                    "The property \"allowed\" expected a value of type \"array[]\" but the provided value is of type \"object\".",
-                    "The property \"minLength\" expected a value of type \"int\" but the provided value is of type \"object\".",
-                    "The property \"description\" expected a value of type \"string\" but the provided value is of type \"int\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<array>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<array>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<array>\".",
-                    "No other properties are allowed on objects of type \"ParameterModifier<array>\".");
+            diagnostics.Should().BeEmpty();
         }
 
         [TestMethod]
@@ -873,15 +374,15 @@ namespace Bicep.Core.UnitTests.TypeSystem
                 "discObj",
                 TypeSymbolValidationFlags.Default,
                 "myDiscriminator",
-                new []
+                new[]
                 {
                     new ObjectType("typeA", TypeSymbolValidationFlags.Default, new []
-                    { 
+                    {
                         new TypeProperty("myDiscriminator", new StringLiteralType("valA")),
                         new TypeProperty("fieldA", LanguageConstants.Any, TypePropertyFlags.Required),
                     }, null),
                     new ObjectType("typeB", TypeSymbolValidationFlags.Default, new []
-                    { 
+                    {
                         new TypeProperty("myDiscriminator", new StringLiteralType("valB")),
                         new TypeProperty("fieldB", LanguageConstants.Any, TypePropertyFlags.Required),
                     }, null),
@@ -889,7 +390,7 @@ namespace Bicep.Core.UnitTests.TypeSystem
 
             {
                 // no discriminator field supplied
-                var obj = TestSyntaxFactory.CreateObject(new []
+                var obj = TestSyntaxFactory.CreateObject(new[]
                 {
                     TestSyntaxFactory.CreateProperty("fieldA", TestSyntaxFactory.CreateString("someVal")),
                 });
@@ -897,11 +398,11 @@ namespace Bicep.Core.UnitTests.TypeSystem
                 var hierarchy = new SyntaxHierarchy();
                 hierarchy.AddRoot(obj);
 
-                var diagnosticWriter = ToListDiagnosticWriter.Create();
-                var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, discriminatedType, diagnosticWriter);
+                var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, obj, discriminatedType);
 
-                diagnosticWriter.GetDiagnostics().Should().SatisfyRespectively(
-                    x => {
+                diagnostics.Should().SatisfyRespectively(
+                    x =>
+                    {
                         x.Message.Should().Be("The property \"myDiscriminator\" requires a value of type \"'valA' | 'valB'\", but none was supplied.");
                     });
                 narrowedType.Should().BeOfType<AnyType>();
@@ -909,7 +410,7 @@ namespace Bicep.Core.UnitTests.TypeSystem
 
             {
                 // incorrect type specified for the discriminator field
-                var obj = TestSyntaxFactory.CreateObject(new []
+                var obj = TestSyntaxFactory.CreateObject(new[]
                 {
                     TestSyntaxFactory.CreateProperty("myDiscriminator", TestSyntaxFactory.CreateObject(Enumerable.Empty<ObjectPropertySyntax>())),
                     TestSyntaxFactory.CreateProperty("fieldB", TestSyntaxFactory.CreateString("someVal")),
@@ -918,11 +419,11 @@ namespace Bicep.Core.UnitTests.TypeSystem
                 var hierarchy = new SyntaxHierarchy();
                 hierarchy.AddRoot(obj);
 
-                var diagnosticWriter = ToListDiagnosticWriter.Create();
-                var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, discriminatedType, diagnosticWriter);
+                var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, obj, discriminatedType);
 
-                diagnosticWriter.GetDiagnostics().Should().SatisfyRespectively(
-                    x => {
+                diagnostics.Should().SatisfyRespectively(
+                    x =>
+                    {
                         x.Message.Should().Be("The property \"myDiscriminator\" expected a value of type \"'valA' | 'valB'\" but the provided value is of type \"object\".");
                     });
                 narrowedType.Should().BeOfType<AnyType>();
@@ -930,7 +431,7 @@ namespace Bicep.Core.UnitTests.TypeSystem
 
             {
                 // discriminator value that matches neither option supplied
-                var obj = TestSyntaxFactory.CreateObject(new []
+                var obj = TestSyntaxFactory.CreateObject(new[]
                 {
                     TestSyntaxFactory.CreateProperty("myDiscriminator", TestSyntaxFactory.CreateString("valC")),
                 });
@@ -938,11 +439,11 @@ namespace Bicep.Core.UnitTests.TypeSystem
                 var hierarchy = new SyntaxHierarchy();
                 hierarchy.AddRoot(obj);
 
-                var diagnosticWriter = ToListDiagnosticWriter.Create();
-                var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, discriminatedType, diagnosticWriter);
+                var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, obj, discriminatedType);
 
-                diagnosticWriter.GetDiagnostics().Should().SatisfyRespectively(
-                    x => {
+                diagnostics.Should().SatisfyRespectively(
+                    x =>
+                    {
                         x.Message.Should().Be("The property \"myDiscriminator\" expected a value of type \"'valA' | 'valB'\" but the provided value is of type \"'valC'\". Did you mean \"'valA'\"?");
                     });
                 narrowedType.Should().BeOfType<AnyType>();
@@ -950,7 +451,7 @@ namespace Bicep.Core.UnitTests.TypeSystem
 
             {
                 // missing required property for the 'valB' branch
-                var obj = TestSyntaxFactory.CreateObject(new []
+                var obj = TestSyntaxFactory.CreateObject(new[]
                 {
                     TestSyntaxFactory.CreateProperty("myDiscriminator", TestSyntaxFactory.CreateString("valB")),
                 });
@@ -958,11 +459,11 @@ namespace Bicep.Core.UnitTests.TypeSystem
                 var hierarchy = new SyntaxHierarchy();
                 hierarchy.AddRoot(obj);
 
-                var diagnosticWriter = ToListDiagnosticWriter.Create();
-                var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, discriminatedType, diagnosticWriter);
+                var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, obj, discriminatedType);
 
-                diagnosticWriter.GetDiagnostics().Should().SatisfyRespectively(
-                    x => {
+                diagnostics.Should().SatisfyRespectively(
+                    x =>
+                    {
                         x.Message.Should().Be("The specified \"object\" declaration is missing the following required properties: \"fieldB\".");
                     });
 
@@ -977,7 +478,7 @@ namespace Bicep.Core.UnitTests.TypeSystem
 
             {
                 // supplied the required property for the 'valB' branch
-                var obj = TestSyntaxFactory.CreateObject(new []
+                var obj = TestSyntaxFactory.CreateObject(new[]
                 {
                     TestSyntaxFactory.CreateProperty("myDiscriminator", TestSyntaxFactory.CreateString("valB")),
                     TestSyntaxFactory.CreateProperty("fieldB", TestSyntaxFactory.CreateString("someVal")),
@@ -986,10 +487,9 @@ namespace Bicep.Core.UnitTests.TypeSystem
                 var hierarchy = new SyntaxHierarchy();
                 hierarchy.AddRoot(obj);
 
-                var diagnosticWriter = ToListDiagnosticWriter.Create();
-                var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), obj, discriminatedType, diagnosticWriter);
+                var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, obj, discriminatedType);
 
-                diagnosticWriter.GetDiagnostics().Should().BeEmpty();
+                diagnostics.Should().BeEmpty();
                 narrowedType.Should().BeOfType<ObjectType>();
 
                 // we have the discriminator key, so we should have picked the correct object, rather than returning the discriminator
@@ -1015,10 +515,9 @@ namespace Bicep.Core.UnitTests.TypeSystem
             {
                 // pick a valid path (int) - we should narrow the union type to just int
                 var intSyntax = TestSyntaxFactory.CreateInt(1234);
-                var diagnosticWriter = ToListDiagnosticWriter.Create();
-                var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), intSyntax, unionType, diagnosticWriter);
-                
-                diagnosticWriter.GetDiagnostics().Should().BeEmpty();
+                var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, intSyntax, unionType);
+
+                diagnostics.Should().BeEmpty();
                 narrowedType.Should().Be(LanguageConstants.Int);
             }
 
@@ -1026,20 +525,18 @@ namespace Bicep.Core.UnitTests.TypeSystem
                 // pick an invalid path (object) - we should get diagnosticWriter
                 var objectSyntax = TestSyntaxFactory.CreateObject(Enumerable.Empty<ObjectPropertySyntax>());
                 hierarchy.AddRoot(objectSyntax);
-                var diagnosticWriter = ToListDiagnosticWriter.Create();
-                var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), objectSyntax, unionType, diagnosticWriter);
-                
-                diagnosticWriter.GetDiagnostics().Should().Contain(x => x.Message == "Expected a value of type \"bool | int | string\" but the provided value is of type \"object\".");
+                var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, objectSyntax, unionType);
+
+                diagnostics.Should().Contain(x => x.Message == "Expected a value of type \"bool | int | string\" but the provided value is of type \"object\".");
                 narrowedType.Should().Be(unionType);
             }
 
             {
                 // try narrowing with a string
                 var stringLiteralSyntax = TestSyntaxFactory.CreateString("abc");
-                var diagnosticWriter = ToListDiagnosticWriter.Create();
-                var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), stringLiteralSyntax, unionType, diagnosticWriter);
-                
-                diagnosticWriter.GetDiagnostics().Should().BeEmpty();
+                var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, stringLiteralSyntax, unionType);
+
+                diagnostics.Should().BeEmpty();
                 narrowedType.Should().Be(LanguageConstants.String);
             }
 
@@ -1050,10 +547,9 @@ namespace Bicep.Core.UnitTests.TypeSystem
             {
                 // union of string literals with matching type
                 var stringLiteralSyntax = TestSyntaxFactory.CreateString("nora");
-                var diagnosticWriter = ToListDiagnosticWriter.Create();
-                var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), stringLiteralSyntax, stringLiteralUnionType, diagnosticWriter);
-                
-                diagnosticWriter.GetDiagnostics().Should().BeEmpty();
+                var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, stringLiteralSyntax, stringLiteralUnionType);
+
+                diagnostics.Should().BeEmpty();
                 narrowedType.Should().BeOfType<StringLiteralType>();
                 (narrowedType as StringLiteralType)!.Name.Should().Be("'nora'");
             }
@@ -1061,10 +557,9 @@ namespace Bicep.Core.UnitTests.TypeSystem
             {
                 // union of string literals with non-matching type
                 var stringLiteralSyntax = TestSyntaxFactory.CreateString("zona");
-                var diagnosticWriter = ToListDiagnosticWriter.Create();
-                var narrowedType = TypeValidator.NarrowTypeAndCollectDiagnostics(CreateTypeManager(hierarchy), stringLiteralSyntax, stringLiteralUnionType, diagnosticWriter);
-                
-                diagnosticWriter.GetDiagnostics().Should().Contain(x => x.Message == "Expected a value of type \"'dave' | 'nora'\" but the provided value is of type \"'zona'\".");
+                var (narrowedType, diagnostics) = NarrowTypeAndCollectDiagnostics(hierarchy, stringLiteralSyntax, stringLiteralUnionType);
+
+                diagnostics.Should().Contain(x => x.Message == "Expected a value of type \"'dave' | 'nora'\" but the provided value is of type \"'zona'\".");
                 narrowedType.Should().Be(stringLiteralUnionType);
             }
         }
@@ -1078,14 +573,14 @@ namespace Bicep.Core.UnitTests.TypeSystem
 
         private static IEnumerable<object[]> GetData()
         {
-            static object[] CreateRow(string name, ObjectSyntax @object) => new object[] {name, @object};
+            static object[] CreateRow(string name, ObjectSyntax @object) => new object[] { name, @object };
 
             // empty object
             yield return CreateRow("Empty", TestSyntaxFactory.CreateObject(new ObjectPropertySyntax[0]));
 
-            yield return CreateRow("StringProperty", TestSyntaxFactory.CreateObject(new[] {TestSyntaxFactory.CreateProperty("test", TestSyntaxFactory.CreateString("value"))}));
+            yield return CreateRow("StringProperty", TestSyntaxFactory.CreateObject(new[] { TestSyntaxFactory.CreateProperty("test", TestSyntaxFactory.CreateString("value")) }));
 
-            yield return CreateRow("IntProperty", TestSyntaxFactory.CreateObject(new[] {TestSyntaxFactory.CreateProperty("test", TestSyntaxFactory.CreateInt(42))}));
+            yield return CreateRow("IntProperty", TestSyntaxFactory.CreateObject(new[] { TestSyntaxFactory.CreateProperty("test", TestSyntaxFactory.CreateInt(42)) }));
 
             yield return CreateRow("MixedProperties", TestSyntaxFactory.CreateObject(new[]
             {
@@ -1115,13 +610,24 @@ namespace Bicep.Core.UnitTests.TypeSystem
             return typeProvider.GetType(typeReference, ResourceTypeGenerationFlags.None);
         }
 
-        private static TypeManager CreateTypeManager(SyntaxHierarchy hierarchy) 
+        private static (TypeSymbol result, IReadOnlyList<IDiagnostic> diagnostics) NarrowTypeAndCollectDiagnostics(SyntaxHierarchy hierarchy, SyntaxBase expression, TypeSymbol targetType)
         {
-            var binderMock = new Mock<IBinder>();
-            binderMock.Setup(x => x.GetParent(It.IsAny<SyntaxBase>()))
+            var binderMock = new Mock<IBinder>(MockBehavior.Strict);
+            binderMock
+                .Setup(x => x.GetParent(It.IsAny<SyntaxBase>()))
                 .Returns<SyntaxBase>(x => hierarchy.GetParent(x));
+            var fileResolverMock = new Mock<IFileResolver>(MockBehavior.Strict);
 
-            return new TypeManager(TestTypeHelper.CreateEmptyProvider(), binderMock.Object);
+            binderMock
+                .Setup(x => x.GetSymbolInfo(It.IsAny<SyntaxBase>()))
+                .Returns<Symbol?>(null);
+
+            var typeManager = new TypeManager(TestTypeHelper.CreateEmptyProvider(), binderMock.Object, fileResolverMock.Object);
+
+            var diagnosticWriter = ToListDiagnosticWriter.Create();
+            var result = TypeValidator.NarrowTypeAndCollectDiagnostics(typeManager, binderMock.Object, diagnosticWriter, expression, targetType);
+
+            return (result, diagnosticWriter.GetDiagnostics().ToList());
         }
     }
 }

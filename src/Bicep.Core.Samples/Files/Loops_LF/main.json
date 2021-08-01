@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "dev",
-      "templateHash": "3497183978350884553"
+      "templateHash": "5199481432060246174"
     }
   },
   "parameters": {
@@ -264,7 +264,7 @@
       },
       "type": "Microsoft.Network/dnsZones",
       "apiVersion": "2018-05-01",
-      "name": "no loop variable",
+      "name": "no loop variable 2",
       "location": "eastus",
       "dependsOn": [
         "[resourceId('Microsoft.Network/dnsZones', 'no loop variable')]"
@@ -443,7 +443,7 @@
             "_generator": {
               "name": "bicep",
               "version": "dev",
-              "templateHash": "6482924892230157767"
+              "templateHash": "9254499349295781979"
             }
           },
           "parameters": {
@@ -489,7 +489,7 @@
             "_generator": {
               "name": "bicep",
               "version": "dev",
-              "templateHash": "6482924892230157767"
+              "templateHash": "9254499349295781979"
             }
           },
           "parameters": {
@@ -537,7 +537,7 @@
             "_generator": {
               "name": "bicep",
               "version": "dev",
-              "templateHash": "6482924892230157767"
+              "templateHash": "9254499349295781979"
             }
           },
           "parameters": {
@@ -581,7 +581,7 @@
             "_generator": {
               "name": "bicep",
               "version": "dev",
-              "templateHash": "6482924892230157767"
+              "templateHash": "9254499349295781979"
             }
           },
           "parameters": {
@@ -630,7 +630,7 @@
             "_generator": {
               "name": "bicep",
               "version": "dev",
-              "templateHash": "6482924892230157767"
+              "templateHash": "9254499349295781979"
             }
           },
           "parameters": {
@@ -679,7 +679,7 @@
             "_generator": {
               "name": "bicep",
               "version": "dev",
-              "templateHash": "6482924892230157767"
+              "templateHash": "9254499349295781979"
             }
           },
           "parameters": {
@@ -724,7 +724,7 @@
             "_generator": {
               "name": "bicep",
               "version": "dev",
-              "templateHash": "6482924892230157767"
+              "templateHash": "9254499349295781979"
             }
           },
           "parameters": {
@@ -769,7 +769,7 @@
             "_generator": {
               "name": "bicep",
               "version": "dev",
-              "templateHash": "6482924892230157767"
+              "templateHash": "9254499349295781979"
             }
           },
           "parameters": {

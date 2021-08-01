@@ -6,13 +6,13 @@ using System.Linq;
 using Bicep.Core;
 using Bicep.Core.Parsing;
 using Bicep.Core.Syntax;
+using Bicep.Core.Workspaces;
 using Bicep.LanguageServer.Extensions;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document.Proposals;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models.Proposals;
+using OmniSharp.Extensions.LanguageServer.Protocol.Document;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace Bicep.LanguageServer
 {
-    [Obsolete] // proposed LSP feature must be marked 'obsolete' to access
     public class SemanticTokenVisitor : SyntaxVisitor
     {
         private readonly List<(IPositionable positionable, SemanticTokenType tokenType)> tokens;
@@ -22,16 +22,16 @@ namespace Bicep.LanguageServer
             this.tokens = new List<(IPositionable, SemanticTokenType)>();
         }
 
-        public static void BuildSemanticTokens(SemanticTokensBuilder builder, SyntaxTree syntaxTree)
+        public static void BuildSemanticTokens(SemanticTokensBuilder builder, BicepFile bicepFile)
         {
             var visitor = new SemanticTokenVisitor();
 
-            visitor.Visit(syntaxTree.ProgramSyntax);
+            visitor.Visit(bicepFile.ProgramSyntax);
 
             // the builder is fussy about ordering. tokens are visited out of order, we need to call build after visiting everything
             foreach (var (positionable, tokenType) in visitor.tokens.OrderBy(t => t.positionable.Span.Position))
             {
-                var tokenRanges = positionable.ToRangeSpanningLines(syntaxTree.LineStarts);
+                var tokenRanges = positionable.ToRangeSpanningLines(bicepFile.LineStarts);
                 foreach (var tokenRange in tokenRanges)
                 {
                     builder.Push(tokenRange.Start.Line, tokenRange.Start.Character, tokenRange.End.Character - tokenRange.Start.Character, tokenType as SemanticTokenType?);
@@ -76,13 +76,21 @@ namespace Bicep.LanguageServer
 
         public override void VisitFunctionCallSyntax(FunctionCallSyntax syntax)
         {
+            // We need to set token types for OpenParen and CloseParen in case the function call
+            // is inside a string interpolation. Our current textmate grammar will tag them as
+            // string if they are not overrode by the semantic tokens.
             AddTokenType(syntax.Name, SemanticTokenType.Function);
+            AddTokenType(syntax.OpenParen, SemanticTokenType.Operator);
+            AddTokenType(syntax.CloseParen, SemanticTokenType.Operator);
             base.VisitFunctionCallSyntax(syntax);
         }
 
         public override void VisitInstanceFunctionCallSyntax(InstanceFunctionCallSyntax syntax)
         {
+            AddTokenType(syntax.Dot, SemanticTokenType.Operator);
             AddTokenType(syntax.Name, SemanticTokenType.Function);
+            AddTokenType(syntax.OpenParen, SemanticTokenType.Operator);
+            AddTokenType(syntax.CloseParen, SemanticTokenType.Operator);
             base.VisitInstanceFunctionCallSyntax(syntax);
         }
 
@@ -106,7 +114,7 @@ namespace Bicep.LanguageServer
             }
             else
             {
-                AddTokenType(syntax.Key, SemanticTokenType.Member);
+                AddTokenType(syntax.Key, SemanticTokenType.Method);
             }
             Visit(syntax.Colon);
             Visit(syntax.Value);
@@ -128,8 +136,16 @@ namespace Bicep.LanguageServer
 
         public override void VisitPropertyAccessSyntax(PropertyAccessSyntax syntax)
         {
+            AddTokenType(syntax.Dot, SemanticTokenType.Operator);
             AddTokenType(syntax.PropertyName, SemanticTokenType.Property);
             base.VisitPropertyAccessSyntax(syntax);
+        }
+
+        public override void VisitArrayAccessSyntax(ArrayAccessSyntax syntax)
+        {
+            AddTokenType(syntax.OpenSquare, SemanticTokenType.Operator);
+            AddTokenType(syntax.CloseSquare, SemanticTokenType.Operator);
+            base.VisitArrayAccessSyntax(syntax);
         }
 
         public override void VisitResourceAccessSyntax(ResourceAccessSyntax syntax)

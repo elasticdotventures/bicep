@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "dev",
-      "templateHash": "12244060679389635458"
+      "templateHash": "13982454735090198051"
     }
   },
   "parameters": {
@@ -264,7 +264,7 @@
       },
       "type": "Microsoft.Network/dnsZones",
       "apiVersion": "2018-05-01",
-      "name": "no loop variable",
+      "name": "no loop variable 2",
       "location": "eastus",
       "dependsOn": [
         "[resourceId('Microsoft.Network/dnsZones', 'no loop variable')]"
@@ -421,7 +421,7 @@
             "_generator": {
               "name": "bicep",
               "version": "dev",
-              "templateHash": "6482924892230157767"
+              "templateHash": "9254499349295781979"
             }
           },
           "parameters": {
@@ -467,7 +467,7 @@
             "_generator": {
               "name": "bicep",
               "version": "dev",
-              "templateHash": "6482924892230157767"
+              "templateHash": "9254499349295781979"
             }
           },
           "parameters": {
@@ -515,7 +515,7 @@
             "_generator": {
               "name": "bicep",
               "version": "dev",
-              "templateHash": "6482924892230157767"
+              "templateHash": "9254499349295781979"
             }
           },
           "parameters": {
@@ -559,7 +559,7 @@
             "_generator": {
               "name": "bicep",
               "version": "dev",
-              "templateHash": "6482924892230157767"
+              "templateHash": "9254499349295781979"
             }
           },
           "parameters": {
@@ -608,7 +608,7 @@
             "_generator": {
               "name": "bicep",
               "version": "dev",
-              "templateHash": "6482924892230157767"
+              "templateHash": "9254499349295781979"
             }
           },
           "parameters": {
@@ -657,7 +657,7 @@
             "_generator": {
               "name": "bicep",
               "version": "dev",
-              "templateHash": "6482924892230157767"
+              "templateHash": "9254499349295781979"
             }
           },
           "parameters": {

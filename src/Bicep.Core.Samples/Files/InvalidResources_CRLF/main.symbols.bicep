@@ -16,7 +16,7 @@ resource foo 'ddd'
 resource trailingSpace  
 //@[9:22) Resource trailingSpace. Type: error. Declaration start char: 0, length: 24
 
-// #completionTest(19,20) -> object
+// #completionTest(19,20) -> resourceObject
 resource foo 'ddd'= 
 //@[9:12) Resource foo. Type: error. Declaration start char: 0, length: 20
 
@@ -472,29 +472,31 @@ resource loopForRuntimeCheck4 'Microsoft.Network/dnsZones@2018-05-01' = [for oth
 }]
 
 resource missingTopLevelProperties 'Microsoft.Storage/storageAccounts@2020-08-01-preview' = {
-//@[9:34) Resource missingTopLevelProperties. Type: Microsoft.Storage/storageAccounts@2020-08-01-preview. Declaration start char: 0, length: 151
+//@[9:34) Resource missingTopLevelProperties. Type: Microsoft.Storage/storageAccounts@2020-08-01-preview. Declaration start char: 0, length: 153
   // #completionTest(0, 1, 2) -> topLevelProperties
-
+  
 }
 
 resource missingTopLevelPropertiesExceptName 'Microsoft.Storage/storageAccounts@2020-08-01-preview' = {
-//@[9:44) Resource missingTopLevelPropertiesExceptName. Type: Microsoft.Storage/storageAccounts@2020-08-01-preview. Declaration start char: 0, length: 304
-  // #completionTest(0, 1, 2) -> topLevelPropertiesMinusName
+//@[9:44) Resource missingTopLevelPropertiesExceptName. Type: Microsoft.Storage/storageAccounts@2020-08-01-preview. Declaration start char: 0, length: 305
+  // #completionTest(2) -> topLevelPropertiesMinusNameNoColon
   name: 'me'
   // do not remove whitespace before the closing curly
   // #completionTest(0, 1, 2) -> topLevelPropertiesMinusName
   
 }
 
-// #completionTest(24,25,26,49,65) -> resourceTypes
+// #completionTest(24,25,26,49,65,69,70) -> virtualNetworksResourceTypes
 resource unfinishedVnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
-//@[9:23) Resource unfinishedVnet. Type: Microsoft.Network/virtualNetworks@2020-06-01. Declaration start char: 0, length: 468
+//@[9:23) Resource unfinishedVnet. Type: Microsoft.Network/virtualNetworks@2020-06-01. Declaration start char: 0, length: 531
   name: 'v'
   location: 'eastus'
   properties: {
     subnets: [
       {
         // #completionTest(0,1,2,3,4,5,6,7) -> subnetPropertiesMinusProperties
+       
+        // #completionTest(0,1,2,3,4,5,6,7) -> empty
         properties: {
           delegations: [
             {
@@ -638,10 +640,10 @@ var discriminatorKeyValueMissingCompletions3_for_if = discriminatorKeyValueMissi
 Discriminator value set 1
 */
 resource discriminatorKeySetOne 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-//@[9:31) Resource discriminatorKeySetOne. Type: Microsoft.Resources/deploymentScripts@2020-10-01. Declaration start char: 0, length: 264
+//@[9:31) Resource discriminatorKeySetOne. Type: Microsoft.Resources/deploymentScripts@2020-10-01. Declaration start char: 0, length: 266
   kind: 'AzureCLI'
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-
+  
   properties: {
     // #completionTest(0,1,2,3,4) -> deploymentScriptCliProperties
     
@@ -662,10 +664,10 @@ var discriminatorKeySetOneCompletions3 = discriminatorKeySetOne.properties[]
 Discriminator value set 1 (conditional)
 */
 resource discriminatorKeySetOne_if 'Microsoft.Resources/deploymentScripts@2020-10-01' = if(2==3) {
-//@[9:34) Resource discriminatorKeySetOne_if. Type: Microsoft.Resources/deploymentScripts@2020-10-01. Declaration start char: 0, length: 276
+//@[9:34) Resource discriminatorKeySetOne_if. Type: Microsoft.Resources/deploymentScripts@2020-10-01. Declaration start char: 0, length: 278
   kind: 'AzureCLI'
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-
+  
   properties: {
     // #completionTest(0,1,2,3,4) -> deploymentScriptCliProperties
     
@@ -687,10 +689,10 @@ Discriminator value set 1 (loop)
 */
 resource discriminatorKeySetOne_for 'Microsoft.Resources/deploymentScripts@2020-10-01' = [ for thing in []: {
 //@[95:100) Local thing. Type: any. Declaration start char: 95, length: 5
-//@[9:35) Resource discriminatorKeySetOne_for. Type: Microsoft.Resources/deploymentScripts@2020-10-01[]. Declaration start char: 0, length: 288
+//@[9:35) Resource discriminatorKeySetOne_for. Type: Microsoft.Resources/deploymentScripts@2020-10-01[]. Declaration start char: 0, length: 290
   kind: 'AzureCLI'
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-
+  
   properties: {
     // #completionTest(0,1,2,3,4) -> deploymentScriptCliProperties
     
@@ -712,10 +714,10 @@ Discriminator value set 1 (filtered loop)
 */
 resource discriminatorKeySetOne_for_if 'Microsoft.Resources/deploymentScripts@2020-10-01' = [ for thing in []: if(true) {
 //@[98:103) Local thing. Type: any. Declaration start char: 98, length: 5
-//@[9:38) Resource discriminatorKeySetOne_for_if. Type: Microsoft.Resources/deploymentScripts@2020-10-01[]. Declaration start char: 0, length: 300
+//@[9:38) Resource discriminatorKeySetOne_for_if. Type: Microsoft.Resources/deploymentScripts@2020-10-01[]. Declaration start char: 0, length: 302
   kind: 'AzureCLI'
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-
+  
   properties: {
     // #completionTest(0,1,2,3,4) -> deploymentScriptCliProperties
     
@@ -737,10 +739,10 @@ var discriminatorKeySetOneCompletions3_for_if = discriminatorKeySetOne_for_if[1]
 Discriminator value set 2
 */
 resource discriminatorKeySetTwo 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-//@[9:31) Resource discriminatorKeySetTwo. Type: Microsoft.Resources/deploymentScripts@2020-10-01. Declaration start char: 0, length: 270
+//@[9:31) Resource discriminatorKeySetTwo. Type: Microsoft.Resources/deploymentScripts@2020-10-01. Declaration start char: 0, length: 272
   kind: 'AzurePowerShell'
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-
+  
   properties: {
     // #completionTest(0,1,2,3,4) -> deploymentScriptPSProperties
     
@@ -764,10 +766,10 @@ var discriminatorKeySetTwoCompletionsArrayIndexer2 = discriminatorKeySetTwo['pro
 Discriminator value set 2 (conditional)
 */
 resource discriminatorKeySetTwo_if 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-//@[9:34) Resource discriminatorKeySetTwo_if. Type: Microsoft.Resources/deploymentScripts@2020-10-01. Declaration start char: 0, length: 273
+//@[9:34) Resource discriminatorKeySetTwo_if. Type: Microsoft.Resources/deploymentScripts@2020-10-01. Declaration start char: 0, length: 275
   kind: 'AzurePowerShell'
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-
+  
   properties: {
     // #completionTest(0,1,2,3,4) -> deploymentScriptPSProperties
     
@@ -793,10 +795,10 @@ Discriminator value set 2 (loops)
 */
 resource discriminatorKeySetTwo_for 'Microsoft.Resources/deploymentScripts@2020-10-01' = [for thing in []: {
 //@[94:99) Local thing. Type: any. Declaration start char: 94, length: 5
-//@[9:35) Resource discriminatorKeySetTwo_for. Type: Microsoft.Resources/deploymentScripts@2020-10-01[]. Declaration start char: 0, length: 293
+//@[9:35) Resource discriminatorKeySetTwo_for. Type: Microsoft.Resources/deploymentScripts@2020-10-01[]. Declaration start char: 0, length: 295
   kind: 'AzurePowerShell'
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-
+  
   properties: {
     // #completionTest(0,1,2,3,4) -> deploymentScriptPSProperties
     
@@ -822,10 +824,10 @@ Discriminator value set 2 (filtered loops)
 */
 resource discriminatorKeySetTwo_for_if 'Microsoft.Resources/deploymentScripts@2020-10-01' = [for thing in []: if(true) {
 //@[97:102) Local thing. Type: any. Declaration start char: 97, length: 5
-//@[9:38) Resource discriminatorKeySetTwo_for_if. Type: Microsoft.Resources/deploymentScripts@2020-10-01[]. Declaration start char: 0, length: 305
+//@[9:38) Resource discriminatorKeySetTwo_for_if. Type: Microsoft.Resources/deploymentScripts@2020-10-01[]. Declaration start char: 0, length: 307
   kind: 'AzurePowerShell'
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-
+  
   properties: {
     // #completionTest(0,1,2,3,4) -> deploymentScriptPSProperties
     
@@ -859,7 +861,7 @@ var mock = incorrectPropertiesKey.p
 //@[4:8) Variable mock. Type: error. Declaration start char: 0, length: 35
 
 resource incorrectPropertiesKey2 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-//@[9:32) Resource incorrectPropertiesKey2. Type: Microsoft.Resources/deploymentScripts@2020-10-01. Declaration start char: 0, length: 774
+//@[9:32) Resource incorrectPropertiesKey2. Type: Microsoft.Resources/deploymentScripts@2020-10-01. Declaration start char: 0, length: 796
   kind: 'AzureCLI'
   name: 'test'
   location: ''
@@ -883,7 +885,7 @@ resource incorrectPropertiesKey2 'Microsoft.Resources/deploymentScripts@2020-10-
         // #completionTest(0,2,4,6,8) -> environmentVariableProperties
         
       }
-      // #completionTest(0,1,2,3,4,5,6) -> objectPlusSymbols
+      // #completionTest(0,1,2,3,4,5,6) -> objectPlusSymbolsWithRequiredProperties
       
     ]
   }
@@ -1493,7 +1495,7 @@ resource propertyLoopsCannotNest2 'Microsoft.Storage/storageAccounts@2019-06-01'
 // property loops cannot be nested (even more nesting)
 resource propertyLoopsCannotNest2 'Microsoft.Storage/storageAccounts@2019-06-01' = [for account in storageAccounts: {
 //@[88:95) Local account. Type: any. Declaration start char: 88, length: 7
-//@[9:33) Resource propertyLoopsCannotNest2. Type: Microsoft.Storage/storageAccounts@2019-06-01[]. Declaration start char: 0, length: 720
+//@[9:33) Resource propertyLoopsCannotNest2. Type: Microsoft.Storage/storageAccounts@2019-06-01[]. Declaration start char: 0, length: 634
   name: account.name
   location: account.location
   sku: {
@@ -1501,15 +1503,14 @@ resource propertyLoopsCannotNest2 'Microsoft.Storage/storageAccounts@2019-06-01'
   }
   kind: 'StorageV2'
   properties: {
-    // #completionTest(17) -> symbolsPlusAccount
-    networkAcls: {
+    networkAcls:  {
       virtualNetworkRules: [for rule in []: {
 //@[32:36) Local rule. Type: any. Declaration start char: 32, length: 4
-        // #completionTest(12,15,31) -> symbolsPlusRule
+        // #completionTest(15,31) -> symbolsPlusRule
         id: '${account.name}-${account.location}'
         state: [for state in []: {
 //@[20:25) Local state. Type: any. Declaration start char: 20, length: 5
-          // #completionTest(38) -> symbolsPlusAccountRuleStateSomething #completionTest(16,34) -> symbolsPlusAccountRuleState
+          // #completionTest(38) -> empty #completionTest(16) -> symbolsPlusAccountRuleState
           fake: [for something in []: true]
 //@[21:30) Local something. Type: any. Declaration start char: 21, length: 9
         }]
@@ -1831,5 +1832,174 @@ resource anyTypeInExistingScopeLoop 'Microsoft.Network/dnsZones/AAAA@2018-05-01'
 resource tenantLevelResourceBlocked 'Microsoft.Management/managementGroups@2020-05-01' = {
 //@[9:35) Resource tenantLevelResourceBlocked. Type: Microsoft.Management/managementGroups@2020-05-01. Declaration start char: 0, length: 131
   name: 'tenantLevelResourceBlocked'
+}
+
+// #completionTest(15,36,37) -> resourceTypes
+resource comp1 'Microsoft.Resources/'
+//@[9:14) Resource comp1. Type: error. Declaration start char: 0, length: 37
+
+// #completionTest(15,16,17) -> resourceTypes
+resource comp2 ''
+//@[9:14) Resource comp2. Type: error. Declaration start char: 0, length: 17
+
+// #completionTest(38) -> resourceTypes
+resource comp3 'Microsoft.Resources/t'
+//@[9:14) Resource comp3. Type: error. Declaration start char: 0, length: 38
+
+// #completionTest(40) -> resourceTypes
+resource comp4 'Microsoft.Resources/t/v'
+//@[9:14) Resource comp4. Type: error. Declaration start char: 0, length: 40
+
+// #completionTest(49) -> resourceTypes
+resource comp5 'Microsoft.Storage/storageAccounts'
+//@[9:14) Resource comp5. Type: error. Declaration start char: 0, length: 50
+
+// #completionTest(50) -> storageAccountsResourceTypes
+resource comp6 'Microsoft.Storage/storageAccounts@'
+//@[9:14) Resource comp6. Type: error. Declaration start char: 0, length: 51
+
+// #completionTest(52) -> templateSpecsResourceTypes
+resource comp7 'Microsoft.Resources/templateSpecs@20'
+//@[9:14) Resource comp7. Type: error. Declaration start char: 0, length: 53
+
+// #completionTest(60,61) -> virtualNetworksResourceTypes
+resource comp8 'Microsoft.Network/virtualNetworks@2020-06-01'
+//@[9:14) Resource comp8. Type: Microsoft.Network/virtualNetworks@2020-06-01. Declaration start char: 0, length: 61
+
+
+// issue #3000
+resource issue3000LogicApp1 'Microsoft.Logic/workflows@2019-05-01' = {
+//@[9:27) Resource issue3000LogicApp1. Type: Microsoft.Logic/workflows@2019-05-01. Declaration start char: 0, length: 453
+  name: 'issue3000LogicApp1'
+  location: resourceGroup().location
+  properties: {
+    state: 'Enabled'
+    definition: ''
+  }
+  identity: {
+    type: 'SystemAssigned'
+  }
+  extendedLocation: {}
+  sku: {}
+  kind: 'V1'
+  managedBy: 'string'
+  mangedByExtended: [
+   'str1'
+   'str2'
+  ]
+  zones: [
+   'str1'
+   'str2'
+  ]
+  plan: {}
+  eTag: ''
+  scale: {}  
+}
+
+resource issue3000LogicApp2 'Microsoft.Logic/workflows@2019-05-01' = {
+//@[9:27) Resource issue3000LogicApp2. Type: Microsoft.Logic/workflows@2019-05-01. Declaration start char: 0, length: 452
+  name: 'issue3000LogicApp2'
+  location: resourceGroup().location
+  properties: {
+    state: 'Enabled'
+    definition: ''
+  }
+  identity: 'SystemAssigned'
+  extendedLocation: 'eastus'
+  sku: 'Basic'
+  kind: {
+    name: 'V1'
+  }
+  managedBy: {}
+  mangedByExtended: [
+   {}
+   {}
+  ]
+  zones: [
+   {}
+   {}
+  ]
+  plan: ''
+  eTag: {}
+  scale: [
+  {}
+  ]  
+}
+
+resource issue3000stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+//@[9:21) Resource issue3000stg. Type: Microsoft.Storage/storageAccounts@2021-04-01. Declaration start char: 0, length: 234
+  name: 'issue3000stg'
+  kind: 'StorageV2'
+  location: 'West US'
+  sku: {
+    name: 'Premium_LRS'    
+  }
+  madeUpProperty: {}
+  managedByExtended: []
+}
+
+var issue3000stgMadeUpProperty = issue3000stg.madeUpProperty
+//@[4:30) Variable issue3000stgMadeUpProperty. Type: error. Declaration start char: 0, length: 60
+var issue3000stgManagedBy = issue3000stg.managedBy
+//@[4:25) Variable issue3000stgManagedBy. Type: string. Declaration start char: 0, length: 50
+var issue3000stgManagedByExtended = issue3000stg.managedByExtended
+//@[4:33) Variable issue3000stgManagedByExtended. Type: (never)[]. Declaration start char: 0, length: 66
+
+param dataCollectionRule object
+//@[6:24) Parameter dataCollectionRule. Type: object. Declaration start char: 0, length: 31
+param tags object
+//@[6:10) Parameter tags. Type: object. Declaration start char: 0, length: 17
+
+var defaultLogAnalyticsWorkspace = {
+//@[4:32) Variable defaultLogAnalyticsWorkspace. Type: object. Declaration start char: 0, length: 88
+  subscriptionId: subscription().subscriptionId
+}
+
+resource logAnalyticsWorkspaces 'Microsoft.OperationalInsights/workspaces@2020-10-01' existing = [for logAnalyticsWorkspace in dataCollectionRule.destinations.logAnalyticsWorkspaces: {
+//@[102:123) Local logAnalyticsWorkspace. Type: any. Declaration start char: 102, length: 21
+//@[9:31) Resource logAnalyticsWorkspaces. Type: Microsoft.OperationalInsights/workspaces@2020-10-01[]. Declaration start char: 0, length: 364
+  name: logAnalyticsWorkspace.name
+  scope: resourceGroup( union( defaultLogAnalyticsWorkspace, logAnalyticsWorkspace ).subscriptionId, logAnalyticsWorkspace.resourceGroup )
+}]
+
+resource dataCollectionRuleRes 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
+//@[9:30) Resource dataCollectionRuleRes. Type: Microsoft.Insights/dataCollectionRules@2021-04-01. Declaration start char: 0, length: 837
+  name: dataCollectionRule.name
+  location: dataCollectionRule.location
+  tags: tags
+  kind: dataCollectionRule.kind
+  properties: {
+    description: dataCollectionRule.description
+    destinations: union(empty(dataCollectionRule.destinations.azureMonitorMetrics.name) ? {} : {
+      azureMonitorMetrics: {
+        name: dataCollectionRule.destinations.azureMonitorMetrics.name
+      }
+    },{
+      logAnalytics: [for (logAnalyticsWorkspace, i) in dataCollectionRule.destinations.logAnalyticsWorkspaces: {
+//@[26:47) Local logAnalyticsWorkspace. Type: any. Declaration start char: 26, length: 21
+//@[49:50) Local i. Type: int. Declaration start char: 49, length: 1
+        name: logAnalyticsWorkspace.destinationName
+        workspaceResourceId: logAnalyticsWorkspaces[i].id
+      }]
+    })
+    dataSources: dataCollectionRule.dataSources
+    dataFlows: dataCollectionRule.dataFlows
+  }
+}
+
+resource dataCollectionRuleRes2 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
+//@[9:31) Resource dataCollectionRuleRes2. Type: Microsoft.Insights/dataCollectionRules@2021-04-01. Declaration start char: 0, length: 445
+  name: dataCollectionRule.name
+  location: dataCollectionRule.location
+  tags: tags
+  kind: dataCollectionRule.kind
+  properties: {
+    description: dataCollectionRule.description
+    destinations: empty([]) ? [for x in []: {}] : [for x in []: {}]
+//@[35:36) Local x. Type: any. Declaration start char: 35, length: 1
+//@[55:56) Local x. Type: any. Declaration start char: 55, length: 1
+    dataSources: dataCollectionRule.dataSources
+    dataFlows: dataCollectionRule.dataFlows
+  }
 }
 

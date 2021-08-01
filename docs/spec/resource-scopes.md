@@ -94,47 +94,24 @@ resource lockResource 'Microsoft.Authorization/locks@2016-09-01' = {
 }
 ```
 
-### Parent-child syntax
-
-You can declare the child resource as a top-level resource just like the parent. To do this, specify the `parent` property on the child with the value set to the symbolic name of the parent. With this syntax you still need to declare the full resource type, but the `name` of the child resource is only the name of the child.
-
-```bicep
-resource myParent 'My.Rp/parentType@2020-01-01' = {
-  name: 'myParent'
-  location: 'West US'
-}
-
-resource myChild 'My.Rp/parentType/childType@2020-01-01' = {
-  parent: myParent // pass parent reference
-  name: 'myChild' // don't require the full name to be formatted with '/' characters
-}
-
-output childProp string = myChild.properties.someProp
-```
-
-Referencing the child resource symbolic name works the same as referencing the parent.
-
-**Note:** the `name` property rules are different than ARM Templates, which requires concatenating the parent and child name together separated by `/`.
-
-Alternatively, you can use the [nested resource syntax](./resources.md#resource-nesting) to declare child resources.
-
 ## Allowed combinations of scopes
 
 This feature is limited to the same scoping constraints that exist within ARM Deployments today.
 
 ## Example Usages
 
-If you have a symbolic reference to a scope, you can use that as a value of the `scope` property. Currently this only works with the `resourceGroup` scope, it does not yet support `subscription` or `managementGroup` scope types.
+If you have a symbolic reference to a scope, you can use that as a value of the `scope` property. 
+
+⚠️ As of release v0.3 symbolic referencing only works with the `resourceGroup` scope,  not `subscription` or `managementGroup` scope types (tracked with [#1883](https://github.com/Azure/bicep/issues?q=is%3Aissue+is%3Aopen+mg+scope))
 
 ```bicep
 // set the target scope for this file
 targetScope = 'subscription'
 
 // deploy a resource group to the subscription scope
-resource myRg 'Microsoft.Resources/resourceGroups@2020-01-01' = {
+resource myRg 'Microsoft.Resources/resourceGroups@2020-10-01' = {
   name: 'myRg'
   location: 'West US'
-  scope: subscription()
 }
 
 // deploy a module to that newly-created resource group
@@ -143,5 +120,7 @@ module myMod './path/to/module.bicep' = {
   scope: myRg
 }
 ```
+
+[resourceGroup properties](https://docs.microsoft.com/azure/templates/microsoft.resources/resourcegroups?tabs=bicep)
 
 [arm-scopes]: https://docs.microsoft.com/azure/azure-resource-manager/management/overview#understand-scope

@@ -61,8 +61,8 @@ resource trailingSpace
 //@[24:24)  SkippedTriviaSyntax
 //@[24:28) NewLine |\r\n\r\n|
 
-// #completionTest(19,20) -> object
-//@[35:37) NewLine |\r\n|
+// #completionTest(19,20) -> resourceObject
+//@[43:45) NewLine |\r\n|
 resource foo 'ddd'= 
 //@[0:20) ResourceDeclarationSyntax
 //@[0:8)  Identifier |resource|
@@ -2912,36 +2912,37 @@ resource loopForRuntimeCheck4 'Microsoft.Network/dnsZones@2018-05-01' = [for oth
 //@[2:6) NewLine |\r\n\r\n|
 
 resource missingTopLevelProperties 'Microsoft.Storage/storageAccounts@2020-08-01-preview' = {
-//@[0:151) ResourceDeclarationSyntax
+//@[0:153) ResourceDeclarationSyntax
 //@[0:8)  Identifier |resource|
 //@[9:34)  IdentifierSyntax
 //@[9:34)   Identifier |missingTopLevelProperties|
 //@[35:89)  StringSyntax
 //@[35:89)   StringComplete |'Microsoft.Storage/storageAccounts@2020-08-01-preview'|
 //@[90:91)  Assignment |=|
-//@[92:151)  ObjectSyntax
+//@[92:153)  ObjectSyntax
 //@[92:93)   LeftBrace |{|
 //@[93:95)   NewLine |\r\n|
   // #completionTest(0, 1, 2) -> topLevelProperties
-//@[51:55)   NewLine |\r\n\r\n|
-
+//@[51:53)   NewLine |\r\n|
+  
+//@[2:4)   NewLine |\r\n|
 }
 //@[0:1)   RightBrace |}|
 //@[1:5) NewLine |\r\n\r\n|
 
 resource missingTopLevelPropertiesExceptName 'Microsoft.Storage/storageAccounts@2020-08-01-preview' = {
-//@[0:304) ResourceDeclarationSyntax
+//@[0:305) ResourceDeclarationSyntax
 //@[0:8)  Identifier |resource|
 //@[9:44)  IdentifierSyntax
 //@[9:44)   Identifier |missingTopLevelPropertiesExceptName|
 //@[45:99)  StringSyntax
 //@[45:99)   StringComplete |'Microsoft.Storage/storageAccounts@2020-08-01-preview'|
 //@[100:101)  Assignment |=|
-//@[102:304)  ObjectSyntax
+//@[102:305)  ObjectSyntax
 //@[102:103)   LeftBrace |{|
 //@[103:105)   NewLine |\r\n|
-  // #completionTest(0, 1, 2) -> topLevelPropertiesMinusName
-//@[60:62)   NewLine |\r\n|
+  // #completionTest(2) -> topLevelPropertiesMinusNameNoColon
+//@[61:63)   NewLine |\r\n|
   name: 'me'
 //@[2:12)   ObjectPropertySyntax
 //@[2:6)    IdentifierSyntax
@@ -2960,17 +2961,17 @@ resource missingTopLevelPropertiesExceptName 'Microsoft.Storage/storageAccounts@
 //@[0:1)   RightBrace |}|
 //@[1:5) NewLine |\r\n\r\n|
 
-// #completionTest(24,25,26,49,65) -> resourceTypes
-//@[51:53) NewLine |\r\n|
+// #completionTest(24,25,26,49,65,69,70) -> virtualNetworksResourceTypes
+//@[72:74) NewLine |\r\n|
 resource unfinishedVnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
-//@[0:468) ResourceDeclarationSyntax
+//@[0:531) ResourceDeclarationSyntax
 //@[0:8)  Identifier |resource|
 //@[9:23)  IdentifierSyntax
 //@[9:23)   Identifier |unfinishedVnet|
 //@[24:70)  StringSyntax
 //@[24:70)   StringComplete |'Microsoft.Network/virtualNetworks@2020-06-01'|
 //@[71:72)  Assignment |=|
-//@[73:468)  ObjectSyntax
+//@[73:531)  ObjectSyntax
 //@[73:74)   LeftBrace |{|
 //@[74:76)   NewLine |\r\n|
   name: 'v'
@@ -2990,28 +2991,32 @@ resource unfinishedVnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
 //@[12:20)     StringComplete |'eastus'|
 //@[20:22)   NewLine |\r\n|
   properties: {
-//@[2:354)   ObjectPropertySyntax
+//@[2:417)   ObjectPropertySyntax
 //@[2:12)    IdentifierSyntax
 //@[2:12)     Identifier |properties|
 //@[12:13)    Colon |:|
-//@[14:354)    ObjectSyntax
+//@[14:417)    ObjectSyntax
 //@[14:15)     LeftBrace |{|
 //@[15:17)     NewLine |\r\n|
     subnets: [
-//@[4:332)     ObjectPropertySyntax
+//@[4:395)     ObjectPropertySyntax
 //@[4:11)      IdentifierSyntax
 //@[4:11)       Identifier |subnets|
 //@[11:12)      Colon |:|
-//@[13:332)      ArraySyntax
+//@[13:395)      ArraySyntax
 //@[13:14)       LeftSquare |[|
 //@[14:16)       NewLine |\r\n|
       {
-//@[6:309)       ArrayItemSyntax
-//@[6:309)        ObjectSyntax
+//@[6:372)       ArrayItemSyntax
+//@[6:372)        ObjectSyntax
 //@[6:7)         LeftBrace |{|
 //@[7:9)         NewLine |\r\n|
         // #completionTest(0,1,2,3,4,5,6,7) -> subnetPropertiesMinusProperties
 //@[78:80)         NewLine |\r\n|
+       
+//@[7:9)         NewLine |\r\n|
+        // #completionTest(0,1,2,3,4,5,6,7) -> empty
+//@[52:54)         NewLine |\r\n|
         properties: {
 //@[8:211)         ObjectPropertySyntax
 //@[8:18)          IdentifierSyntax
@@ -3606,14 +3611,14 @@ Discriminator value set 1
 */
 //@[2:4) NewLine |\r\n|
 resource discriminatorKeySetOne 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-//@[0:264) ResourceDeclarationSyntax
+//@[0:266) ResourceDeclarationSyntax
 //@[0:8)  Identifier |resource|
 //@[9:31)  IdentifierSyntax
 //@[9:31)   Identifier |discriminatorKeySetOne|
 //@[32:82)  StringSyntax
 //@[32:82)   StringComplete |'Microsoft.Resources/deploymentScripts@2020-10-01'|
 //@[83:84)  Assignment |=|
-//@[85:264)  ObjectSyntax
+//@[85:266)  ObjectSyntax
 //@[85:86)   LeftBrace |{|
 //@[86:88)   NewLine |\r\n|
   kind: 'AzureCLI'
@@ -3625,8 +3630,9 @@ resource discriminatorKeySetOne 'Microsoft.Resources/deploymentScripts@2020-10-0
 //@[8:18)     StringComplete |'AzureCLI'|
 //@[18:20)   NewLine |\r\n|
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-//@[55:59)   NewLine |\r\n\r\n|
-
+//@[55:57)   NewLine |\r\n|
+  
+//@[2:4)   NewLine |\r\n|
   properties: {
 //@[2:94)   ObjectPropertySyntax
 //@[2:12)    IdentifierSyntax
@@ -3712,14 +3718,14 @@ Discriminator value set 1 (conditional)
 */
 //@[2:4) NewLine |\r\n|
 resource discriminatorKeySetOne_if 'Microsoft.Resources/deploymentScripts@2020-10-01' = if(2==3) {
-//@[0:276) ResourceDeclarationSyntax
+//@[0:278) ResourceDeclarationSyntax
 //@[0:8)  Identifier |resource|
 //@[9:34)  IdentifierSyntax
 //@[9:34)   Identifier |discriminatorKeySetOne_if|
 //@[35:85)  StringSyntax
 //@[35:85)   StringComplete |'Microsoft.Resources/deploymentScripts@2020-10-01'|
 //@[86:87)  Assignment |=|
-//@[88:276)  IfConditionSyntax
+//@[88:278)  IfConditionSyntax
 //@[88:90)   Identifier |if|
 //@[90:96)   ParenthesizedExpressionSyntax
 //@[90:91)    LeftParen |(|
@@ -3730,7 +3736,7 @@ resource discriminatorKeySetOne_if 'Microsoft.Resources/deploymentScripts@2020-1
 //@[94:95)     IntegerLiteralSyntax
 //@[94:95)      Integer |3|
 //@[95:96)    RightParen |)|
-//@[97:276)   ObjectSyntax
+//@[97:278)   ObjectSyntax
 //@[97:98)    LeftBrace |{|
 //@[98:100)    NewLine |\r\n|
   kind: 'AzureCLI'
@@ -3742,8 +3748,9 @@ resource discriminatorKeySetOne_if 'Microsoft.Resources/deploymentScripts@2020-1
 //@[8:18)      StringComplete |'AzureCLI'|
 //@[18:20)    NewLine |\r\n|
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-//@[55:59)    NewLine |\r\n\r\n|
-
+//@[55:57)    NewLine |\r\n|
+  
+//@[2:4)    NewLine |\r\n|
   properties: {
 //@[2:94)    ObjectPropertySyntax
 //@[2:12)     IdentifierSyntax
@@ -3829,14 +3836,14 @@ Discriminator value set 1 (loop)
 */
 //@[2:4) NewLine |\r\n|
 resource discriminatorKeySetOne_for 'Microsoft.Resources/deploymentScripts@2020-10-01' = [ for thing in []: {
-//@[0:288) ResourceDeclarationSyntax
+//@[0:290) ResourceDeclarationSyntax
 //@[0:8)  Identifier |resource|
 //@[9:35)  IdentifierSyntax
 //@[9:35)   Identifier |discriminatorKeySetOne_for|
 //@[36:86)  StringSyntax
 //@[36:86)   StringComplete |'Microsoft.Resources/deploymentScripts@2020-10-01'|
 //@[87:88)  Assignment |=|
-//@[89:288)  ForSyntax
+//@[89:290)  ForSyntax
 //@[89:90)   LeftSquare |[|
 //@[91:94)   Identifier |for|
 //@[95:100)   LocalVariableSyntax
@@ -3847,7 +3854,7 @@ resource discriminatorKeySetOne_for 'Microsoft.Resources/deploymentScripts@2020-
 //@[104:105)    LeftSquare |[|
 //@[105:106)    RightSquare |]|
 //@[106:107)   Colon |:|
-//@[108:287)   ObjectSyntax
+//@[108:289)   ObjectSyntax
 //@[108:109)    LeftBrace |{|
 //@[109:111)    NewLine |\r\n|
   kind: 'AzureCLI'
@@ -3859,8 +3866,9 @@ resource discriminatorKeySetOne_for 'Microsoft.Resources/deploymentScripts@2020-
 //@[8:18)      StringComplete |'AzureCLI'|
 //@[18:20)    NewLine |\r\n|
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-//@[55:59)    NewLine |\r\n\r\n|
-
+//@[55:57)    NewLine |\r\n|
+  
+//@[2:4)    NewLine |\r\n|
   properties: {
 //@[2:94)    ObjectPropertySyntax
 //@[2:12)     IdentifierSyntax
@@ -3968,14 +3976,14 @@ Discriminator value set 1 (filtered loop)
 */
 //@[2:4) NewLine |\r\n|
 resource discriminatorKeySetOne_for_if 'Microsoft.Resources/deploymentScripts@2020-10-01' = [ for thing in []: if(true) {
-//@[0:300) ResourceDeclarationSyntax
+//@[0:302) ResourceDeclarationSyntax
 //@[0:8)  Identifier |resource|
 //@[9:38)  IdentifierSyntax
 //@[9:38)   Identifier |discriminatorKeySetOne_for_if|
 //@[39:89)  StringSyntax
 //@[39:89)   StringComplete |'Microsoft.Resources/deploymentScripts@2020-10-01'|
 //@[90:91)  Assignment |=|
-//@[92:300)  ForSyntax
+//@[92:302)  ForSyntax
 //@[92:93)   LeftSquare |[|
 //@[94:97)   Identifier |for|
 //@[98:103)   LocalVariableSyntax
@@ -3986,14 +3994,14 @@ resource discriminatorKeySetOne_for_if 'Microsoft.Resources/deploymentScripts@20
 //@[107:108)    LeftSquare |[|
 //@[108:109)    RightSquare |]|
 //@[109:110)   Colon |:|
-//@[111:299)   IfConditionSyntax
+//@[111:301)   IfConditionSyntax
 //@[111:113)    Identifier |if|
 //@[113:119)    ParenthesizedExpressionSyntax
 //@[113:114)     LeftParen |(|
 //@[114:118)     BooleanLiteralSyntax
 //@[114:118)      TrueKeyword |true|
 //@[118:119)     RightParen |)|
-//@[120:299)    ObjectSyntax
+//@[120:301)    ObjectSyntax
 //@[120:121)     LeftBrace |{|
 //@[121:123)     NewLine |\r\n|
   kind: 'AzureCLI'
@@ -4005,8 +4013,9 @@ resource discriminatorKeySetOne_for_if 'Microsoft.Resources/deploymentScripts@20
 //@[8:18)       StringComplete |'AzureCLI'|
 //@[18:20)     NewLine |\r\n|
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-//@[55:59)     NewLine |\r\n\r\n|
-
+//@[55:57)     NewLine |\r\n|
+  
+//@[2:4)     NewLine |\r\n|
   properties: {
 //@[2:94)     ObjectPropertySyntax
 //@[2:12)      IdentifierSyntax
@@ -4115,14 +4124,14 @@ Discriminator value set 2
 */
 //@[2:4) NewLine |\r\n|
 resource discriminatorKeySetTwo 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-//@[0:270) ResourceDeclarationSyntax
+//@[0:272) ResourceDeclarationSyntax
 //@[0:8)  Identifier |resource|
 //@[9:31)  IdentifierSyntax
 //@[9:31)   Identifier |discriminatorKeySetTwo|
 //@[32:82)  StringSyntax
 //@[32:82)   StringComplete |'Microsoft.Resources/deploymentScripts@2020-10-01'|
 //@[83:84)  Assignment |=|
-//@[85:270)  ObjectSyntax
+//@[85:272)  ObjectSyntax
 //@[85:86)   LeftBrace |{|
 //@[86:88)   NewLine |\r\n|
   kind: 'AzurePowerShell'
@@ -4134,8 +4143,9 @@ resource discriminatorKeySetTwo 'Microsoft.Resources/deploymentScripts@2020-10-0
 //@[8:25)     StringComplete |'AzurePowerShell'|
 //@[25:27)   NewLine |\r\n|
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-//@[55:59)   NewLine |\r\n\r\n|
-
+//@[55:57)   NewLine |\r\n|
+  
+//@[2:4)   NewLine |\r\n|
   properties: {
 //@[2:93)   ObjectPropertySyntax
 //@[2:12)    IdentifierSyntax
@@ -4243,14 +4253,14 @@ Discriminator value set 2 (conditional)
 */
 //@[2:4) NewLine |\r\n|
 resource discriminatorKeySetTwo_if 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-//@[0:273) ResourceDeclarationSyntax
+//@[0:275) ResourceDeclarationSyntax
 //@[0:8)  Identifier |resource|
 //@[9:34)  IdentifierSyntax
 //@[9:34)   Identifier |discriminatorKeySetTwo_if|
 //@[35:85)  StringSyntax
 //@[35:85)   StringComplete |'Microsoft.Resources/deploymentScripts@2020-10-01'|
 //@[86:87)  Assignment |=|
-//@[88:273)  ObjectSyntax
+//@[88:275)  ObjectSyntax
 //@[88:89)   LeftBrace |{|
 //@[89:91)   NewLine |\r\n|
   kind: 'AzurePowerShell'
@@ -4262,8 +4272,9 @@ resource discriminatorKeySetTwo_if 'Microsoft.Resources/deploymentScripts@2020-1
 //@[8:25)     StringComplete |'AzurePowerShell'|
 //@[25:27)   NewLine |\r\n|
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-//@[55:59)   NewLine |\r\n\r\n|
-
+//@[55:57)   NewLine |\r\n|
+  
+//@[2:4)   NewLine |\r\n|
   properties: {
 //@[2:93)   ObjectPropertySyntax
 //@[2:12)    IdentifierSyntax
@@ -4372,14 +4383,14 @@ Discriminator value set 2 (loops)
 */
 //@[2:4) NewLine |\r\n|
 resource discriminatorKeySetTwo_for 'Microsoft.Resources/deploymentScripts@2020-10-01' = [for thing in []: {
-//@[0:293) ResourceDeclarationSyntax
+//@[0:295) ResourceDeclarationSyntax
 //@[0:8)  Identifier |resource|
 //@[9:35)  IdentifierSyntax
 //@[9:35)   Identifier |discriminatorKeySetTwo_for|
 //@[36:86)  StringSyntax
 //@[36:86)   StringComplete |'Microsoft.Resources/deploymentScripts@2020-10-01'|
 //@[87:88)  Assignment |=|
-//@[89:293)  ForSyntax
+//@[89:295)  ForSyntax
 //@[89:90)   LeftSquare |[|
 //@[90:93)   Identifier |for|
 //@[94:99)   LocalVariableSyntax
@@ -4390,7 +4401,7 @@ resource discriminatorKeySetTwo_for 'Microsoft.Resources/deploymentScripts@2020-
 //@[103:104)    LeftSquare |[|
 //@[104:105)    RightSquare |]|
 //@[105:106)   Colon |:|
-//@[107:292)   ObjectSyntax
+//@[107:294)   ObjectSyntax
 //@[107:108)    LeftBrace |{|
 //@[108:110)    NewLine |\r\n|
   kind: 'AzurePowerShell'
@@ -4402,8 +4413,9 @@ resource discriminatorKeySetTwo_for 'Microsoft.Resources/deploymentScripts@2020-
 //@[8:25)      StringComplete |'AzurePowerShell'|
 //@[25:27)    NewLine |\r\n|
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-//@[55:59)    NewLine |\r\n\r\n|
-
+//@[55:57)    NewLine |\r\n|
+  
+//@[2:4)    NewLine |\r\n|
   properties: {
 //@[2:93)    ObjectPropertySyntax
 //@[2:12)     IdentifierSyntax
@@ -4533,14 +4545,14 @@ Discriminator value set 2 (filtered loops)
 */
 //@[2:4) NewLine |\r\n|
 resource discriminatorKeySetTwo_for_if 'Microsoft.Resources/deploymentScripts@2020-10-01' = [for thing in []: if(true) {
-//@[0:305) ResourceDeclarationSyntax
+//@[0:307) ResourceDeclarationSyntax
 //@[0:8)  Identifier |resource|
 //@[9:38)  IdentifierSyntax
 //@[9:38)   Identifier |discriminatorKeySetTwo_for_if|
 //@[39:89)  StringSyntax
 //@[39:89)   StringComplete |'Microsoft.Resources/deploymentScripts@2020-10-01'|
 //@[90:91)  Assignment |=|
-//@[92:305)  ForSyntax
+//@[92:307)  ForSyntax
 //@[92:93)   LeftSquare |[|
 //@[93:96)   Identifier |for|
 //@[97:102)   LocalVariableSyntax
@@ -4551,14 +4563,14 @@ resource discriminatorKeySetTwo_for_if 'Microsoft.Resources/deploymentScripts@20
 //@[106:107)    LeftSquare |[|
 //@[107:108)    RightSquare |]|
 //@[108:109)   Colon |:|
-//@[110:304)   IfConditionSyntax
+//@[110:306)   IfConditionSyntax
 //@[110:112)    Identifier |if|
 //@[112:118)    ParenthesizedExpressionSyntax
 //@[112:113)     LeftParen |(|
 //@[113:117)     BooleanLiteralSyntax
 //@[113:117)      TrueKeyword |true|
 //@[117:118)     RightParen |)|
-//@[119:304)    ObjectSyntax
+//@[119:306)    ObjectSyntax
 //@[119:120)     LeftBrace |{|
 //@[120:122)     NewLine |\r\n|
   kind: 'AzurePowerShell'
@@ -4570,8 +4582,9 @@ resource discriminatorKeySetTwo_for_if 'Microsoft.Resources/deploymentScripts@20
 //@[8:25)       StringComplete |'AzurePowerShell'|
 //@[25:27)     NewLine |\r\n|
   // #completionTest(0,1,2) -> deploymentScriptTopLevel
-//@[55:59)     NewLine |\r\n\r\n|
-
+//@[55:57)     NewLine |\r\n|
+  
+//@[2:4)     NewLine |\r\n|
   properties: {
 //@[2:93)     ObjectPropertySyntax
 //@[2:12)      IdentifierSyntax
@@ -4748,14 +4761,14 @@ var mock = incorrectPropertiesKey.p
 //@[35:39) NewLine |\r\n\r\n|
 
 resource incorrectPropertiesKey2 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-//@[0:774) ResourceDeclarationSyntax
+//@[0:796) ResourceDeclarationSyntax
 //@[0:8)  Identifier |resource|
 //@[9:32)  IdentifierSyntax
 //@[9:32)   Identifier |incorrectPropertiesKey2|
 //@[33:83)  StringSyntax
 //@[33:83)   StringComplete |'Microsoft.Resources/deploymentScripts@2020-10-01'|
 //@[84:85)  Assignment |=|
-//@[86:774)  ObjectSyntax
+//@[86:796)  ObjectSyntax
 //@[86:87)   LeftBrace |{|
 //@[87:89)   NewLine |\r\n|
   kind: 'AzureCLI'
@@ -4783,11 +4796,11 @@ resource incorrectPropertiesKey2 'Microsoft.Resources/deploymentScripts@2020-10-
 //@[12:14)     StringComplete |''|
 //@[14:16)   NewLine |\r\n|
   properties: {
-//@[2:630)   ObjectPropertySyntax
+//@[2:652)   ObjectPropertySyntax
 //@[2:12)    IdentifierSyntax
 //@[2:12)     Identifier |properties|
 //@[12:13)    Colon |:|
-//@[14:630)    ObjectSyntax
+//@[14:652)    ObjectSyntax
 //@[14:15)     LeftBrace |{|
 //@[15:17)     NewLine |\r\n|
     azCliVersion: '2'
@@ -4843,11 +4856,11 @@ resource incorrectPropertiesKey2 'Microsoft.Resources/deploymentScripts@2020-10-
 //@[28:32)     NewLine |\r\n\r\n|
 
     environmentVariables: [
-//@[4:204)     ObjectPropertySyntax
+//@[4:226)     ObjectPropertySyntax
 //@[4:24)      IdentifierSyntax
 //@[4:24)       Identifier |environmentVariables|
 //@[24:25)      Colon |:|
-//@[26:204)      ArraySyntax
+//@[26:226)      ArraySyntax
 //@[26:27)       LeftSquare |[|
 //@[27:29)       NewLine |\r\n|
       {
@@ -4862,8 +4875,8 @@ resource incorrectPropertiesKey2 'Microsoft.Resources/deploymentScripts@2020-10-
       }
 //@[6:7)         RightBrace |}|
 //@[7:9)       NewLine |\r\n|
-      // #completionTest(0,1,2,3,4,5,6) -> objectPlusSymbols
-//@[60:62)       NewLine |\r\n|
+      // #completionTest(0,1,2,3,4,5,6) -> objectPlusSymbolsWithRequiredProperties
+//@[82:84)       NewLine |\r\n|
       
 //@[6:8)       NewLine |\r\n|
     ]
@@ -8498,14 +8511,14 @@ resource propertyLoopsCannotNest2 'Microsoft.Storage/storageAccounts@2019-06-01'
 // property loops cannot be nested (even more nesting)
 //@[54:56) NewLine |\r\n|
 resource propertyLoopsCannotNest2 'Microsoft.Storage/storageAccounts@2019-06-01' = [for account in storageAccounts: {
-//@[0:720) ResourceDeclarationSyntax
+//@[0:634) ResourceDeclarationSyntax
 //@[0:8)  Identifier |resource|
 //@[9:33)  IdentifierSyntax
 //@[9:33)   Identifier |propertyLoopsCannotNest2|
 //@[34:80)  StringSyntax
 //@[34:80)   StringComplete |'Microsoft.Storage/storageAccounts@2019-06-01'|
 //@[81:82)  Assignment |=|
-//@[83:720)  ForSyntax
+//@[83:634)  ForSyntax
 //@[83:84)   LeftSquare |[|
 //@[84:87)   Identifier |for|
 //@[88:95)   LocalVariableSyntax
@@ -8516,7 +8529,7 @@ resource propertyLoopsCannotNest2 'Microsoft.Storage/storageAccounts@2019-06-01'
 //@[99:114)    IdentifierSyntax
 //@[99:114)     Identifier |storageAccounts|
 //@[114:115)   Colon |:|
-//@[116:719)   ObjectSyntax
+//@[116:633)   ObjectSyntax
 //@[116:117)    LeftBrace |{|
 //@[117:119)    NewLine |\r\n|
   name: account.name
@@ -8573,29 +8586,27 @@ resource propertyLoopsCannotNest2 'Microsoft.Storage/storageAccounts@2019-06-01'
 //@[8:19)      StringComplete |'StorageV2'|
 //@[19:21)    NewLine |\r\n|
   properties: {
-//@[2:483)    ObjectPropertySyntax
+//@[2:397)    ObjectPropertySyntax
 //@[2:12)     IdentifierSyntax
 //@[2:12)      Identifier |properties|
 //@[12:13)     Colon |:|
-//@[14:483)     ObjectSyntax
+//@[14:397)     ObjectSyntax
 //@[14:15)      LeftBrace |{|
 //@[15:17)      NewLine |\r\n|
-    // #completionTest(17) -> symbolsPlusAccount
-//@[48:50)      NewLine |\r\n|
-    networkAcls: {
-//@[4:411)      ObjectPropertySyntax
+    networkAcls:  {
+//@[4:375)      ObjectPropertySyntax
 //@[4:15)       IdentifierSyntax
 //@[4:15)        Identifier |networkAcls|
 //@[15:16)       Colon |:|
-//@[17:411)       ObjectSyntax
-//@[17:18)        LeftBrace |{|
-//@[18:20)        NewLine |\r\n|
+//@[18:375)       ObjectSyntax
+//@[18:19)        LeftBrace |{|
+//@[19:21)        NewLine |\r\n|
       virtualNetworkRules: [for rule in []: {
-//@[6:384)        ObjectPropertySyntax
+//@[6:347)        ObjectPropertySyntax
 //@[6:25)         IdentifierSyntax
 //@[6:25)          Identifier |virtualNetworkRules|
 //@[25:26)         Colon |:|
-//@[27:384)         ForSyntax
+//@[27:347)         ForSyntax
 //@[27:28)          LeftSquare |[|
 //@[28:31)          Identifier |for|
 //@[32:36)          LocalVariableSyntax
@@ -8606,11 +8617,11 @@ resource propertyLoopsCannotNest2 'Microsoft.Storage/storageAccounts@2019-06-01'
 //@[40:41)           LeftSquare |[|
 //@[41:42)           RightSquare |]|
 //@[42:43)          Colon |:|
-//@[44:383)          ObjectSyntax
+//@[44:346)          ObjectSyntax
 //@[44:45)           LeftBrace |{|
 //@[45:47)           NewLine |\r\n|
-        // #completionTest(12,15,31) -> symbolsPlusRule
-//@[55:57)           NewLine |\r\n|
+        // #completionTest(15,31) -> symbolsPlusRule
+//@[52:54)           NewLine |\r\n|
         id: '${account.name}-${account.location}'
 //@[8:49)           ObjectPropertySyntax
 //@[8:10)            IdentifierSyntax
@@ -8636,11 +8647,11 @@ resource propertyLoopsCannotNest2 'Microsoft.Storage/storageAccounts@2019-06-01'
 //@[47:49)             StringRightPiece |}'|
 //@[49:51)           NewLine |\r\n|
         state: [for state in []: {
-//@[8:219)           ObjectPropertySyntax
+//@[8:185)           ObjectPropertySyntax
 //@[8:13)            IdentifierSyntax
 //@[8:13)             Identifier |state|
 //@[13:14)            Colon |:|
-//@[15:219)            ForSyntax
+//@[15:185)            ForSyntax
 //@[15:16)             LeftSquare |[|
 //@[16:19)             Identifier |for|
 //@[20:25)             LocalVariableSyntax
@@ -8651,11 +8662,11 @@ resource propertyLoopsCannotNest2 'Microsoft.Storage/storageAccounts@2019-06-01'
 //@[29:30)              LeftSquare |[|
 //@[30:31)              RightSquare |]|
 //@[31:32)             Colon |:|
-//@[33:218)             ObjectSyntax
+//@[33:184)             ObjectSyntax
 //@[33:34)              LeftBrace |{|
 //@[34:36)              NewLine |\r\n|
-          // #completionTest(38) -> symbolsPlusAccountRuleStateSomething #completionTest(16,34) -> symbolsPlusAccountRuleState
-//@[126:128)              NewLine |\r\n|
+          // #completionTest(38) -> empty #completionTest(16) -> symbolsPlusAccountRuleState
+//@[92:94)              NewLine |\r\n|
           fake: [for something in []: true]
 //@[10:43)              ObjectPropertySyntax
 //@[10:14)               IdentifierSyntax
@@ -10646,6 +10657,1175 @@ resource tenantLevelResourceBlocked 'Microsoft.Management/managementGroups@2020-
 //@[8:36)    StringSyntax
 //@[8:36)     StringComplete |'tenantLevelResourceBlocked'|
 //@[36:38)   NewLine |\r\n|
+}
+//@[0:1)   RightBrace |}|
+//@[1:5) NewLine |\r\n\r\n|
+
+// #completionTest(15,36,37) -> resourceTypes
+//@[45:47) NewLine |\r\n|
+resource comp1 'Microsoft.Resources/'
+//@[0:37) ResourceDeclarationSyntax
+//@[0:8)  Identifier |resource|
+//@[9:14)  IdentifierSyntax
+//@[9:14)   Identifier |comp1|
+//@[15:37)  StringSyntax
+//@[15:37)   StringComplete |'Microsoft.Resources/'|
+//@[37:37)  SkippedTriviaSyntax
+//@[37:37)  SkippedTriviaSyntax
+//@[37:41) NewLine |\r\n\r\n|
+
+// #completionTest(15,16,17) -> resourceTypes
+//@[45:47) NewLine |\r\n|
+resource comp2 ''
+//@[0:17) ResourceDeclarationSyntax
+//@[0:8)  Identifier |resource|
+//@[9:14)  IdentifierSyntax
+//@[9:14)   Identifier |comp2|
+//@[15:17)  StringSyntax
+//@[15:17)   StringComplete |''|
+//@[17:17)  SkippedTriviaSyntax
+//@[17:17)  SkippedTriviaSyntax
+//@[17:21) NewLine |\r\n\r\n|
+
+// #completionTest(38) -> resourceTypes
+//@[39:41) NewLine |\r\n|
+resource comp3 'Microsoft.Resources/t'
+//@[0:38) ResourceDeclarationSyntax
+//@[0:8)  Identifier |resource|
+//@[9:14)  IdentifierSyntax
+//@[9:14)   Identifier |comp3|
+//@[15:38)  StringSyntax
+//@[15:38)   StringComplete |'Microsoft.Resources/t'|
+//@[38:38)  SkippedTriviaSyntax
+//@[38:38)  SkippedTriviaSyntax
+//@[38:42) NewLine |\r\n\r\n|
+
+// #completionTest(40) -> resourceTypes
+//@[39:41) NewLine |\r\n|
+resource comp4 'Microsoft.Resources/t/v'
+//@[0:40) ResourceDeclarationSyntax
+//@[0:8)  Identifier |resource|
+//@[9:14)  IdentifierSyntax
+//@[9:14)   Identifier |comp4|
+//@[15:40)  StringSyntax
+//@[15:40)   StringComplete |'Microsoft.Resources/t/v'|
+//@[40:40)  SkippedTriviaSyntax
+//@[40:40)  SkippedTriviaSyntax
+//@[40:44) NewLine |\r\n\r\n|
+
+// #completionTest(49) -> resourceTypes
+//@[39:41) NewLine |\r\n|
+resource comp5 'Microsoft.Storage/storageAccounts'
+//@[0:50) ResourceDeclarationSyntax
+//@[0:8)  Identifier |resource|
+//@[9:14)  IdentifierSyntax
+//@[9:14)   Identifier |comp5|
+//@[15:50)  StringSyntax
+//@[15:50)   StringComplete |'Microsoft.Storage/storageAccounts'|
+//@[50:50)  SkippedTriviaSyntax
+//@[50:50)  SkippedTriviaSyntax
+//@[50:54) NewLine |\r\n\r\n|
+
+// #completionTest(50) -> storageAccountsResourceTypes
+//@[54:56) NewLine |\r\n|
+resource comp6 'Microsoft.Storage/storageAccounts@'
+//@[0:51) ResourceDeclarationSyntax
+//@[0:8)  Identifier |resource|
+//@[9:14)  IdentifierSyntax
+//@[9:14)   Identifier |comp6|
+//@[15:51)  StringSyntax
+//@[15:51)   StringComplete |'Microsoft.Storage/storageAccounts@'|
+//@[51:51)  SkippedTriviaSyntax
+//@[51:51)  SkippedTriviaSyntax
+//@[51:55) NewLine |\r\n\r\n|
+
+// #completionTest(52) -> templateSpecsResourceTypes
+//@[52:54) NewLine |\r\n|
+resource comp7 'Microsoft.Resources/templateSpecs@20'
+//@[0:53) ResourceDeclarationSyntax
+//@[0:8)  Identifier |resource|
+//@[9:14)  IdentifierSyntax
+//@[9:14)   Identifier |comp7|
+//@[15:53)  StringSyntax
+//@[15:53)   StringComplete |'Microsoft.Resources/templateSpecs@20'|
+//@[53:53)  SkippedTriviaSyntax
+//@[53:53)  SkippedTriviaSyntax
+//@[53:57) NewLine |\r\n\r\n|
+
+// #completionTest(60,61) -> virtualNetworksResourceTypes
+//@[57:59) NewLine |\r\n|
+resource comp8 'Microsoft.Network/virtualNetworks@2020-06-01'
+//@[0:61) ResourceDeclarationSyntax
+//@[0:8)  Identifier |resource|
+//@[9:14)  IdentifierSyntax
+//@[9:14)   Identifier |comp8|
+//@[15:61)  StringSyntax
+//@[15:61)   StringComplete |'Microsoft.Network/virtualNetworks@2020-06-01'|
+//@[61:61)  SkippedTriviaSyntax
+//@[61:61)  SkippedTriviaSyntax
+//@[61:67) NewLine |\r\n\r\n\r\n|
+
+
+// issue #3000
+//@[14:16) NewLine |\r\n|
+resource issue3000LogicApp1 'Microsoft.Logic/workflows@2019-05-01' = {
+//@[0:453) ResourceDeclarationSyntax
+//@[0:8)  Identifier |resource|
+//@[9:27)  IdentifierSyntax
+//@[9:27)   Identifier |issue3000LogicApp1|
+//@[28:66)  StringSyntax
+//@[28:66)   StringComplete |'Microsoft.Logic/workflows@2019-05-01'|
+//@[67:68)  Assignment |=|
+//@[69:453)  ObjectSyntax
+//@[69:70)   LeftBrace |{|
+//@[70:72)   NewLine |\r\n|
+  name: 'issue3000LogicApp1'
+//@[2:28)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |name|
+//@[6:7)    Colon |:|
+//@[8:28)    StringSyntax
+//@[8:28)     StringComplete |'issue3000LogicApp1'|
+//@[28:30)   NewLine |\r\n|
+  location: resourceGroup().location
+//@[2:36)   ObjectPropertySyntax
+//@[2:10)    IdentifierSyntax
+//@[2:10)     Identifier |location|
+//@[10:11)    Colon |:|
+//@[12:36)    PropertyAccessSyntax
+//@[12:27)     FunctionCallSyntax
+//@[12:25)      IdentifierSyntax
+//@[12:25)       Identifier |resourceGroup|
+//@[25:26)      LeftParen |(|
+//@[26:27)      RightParen |)|
+//@[27:28)     Dot |.|
+//@[28:36)     IdentifierSyntax
+//@[28:36)      Identifier |location|
+//@[36:38)   NewLine |\r\n|
+  properties: {
+//@[2:62)   ObjectPropertySyntax
+//@[2:12)    IdentifierSyntax
+//@[2:12)     Identifier |properties|
+//@[12:13)    Colon |:|
+//@[14:62)    ObjectSyntax
+//@[14:15)     LeftBrace |{|
+//@[15:17)     NewLine |\r\n|
+    state: 'Enabled'
+//@[4:20)     ObjectPropertySyntax
+//@[4:9)      IdentifierSyntax
+//@[4:9)       Identifier |state|
+//@[9:10)      Colon |:|
+//@[11:20)      StringSyntax
+//@[11:20)       StringComplete |'Enabled'|
+//@[20:22)     NewLine |\r\n|
+    definition: ''
+//@[4:18)     ObjectPropertySyntax
+//@[4:14)      IdentifierSyntax
+//@[4:14)       Identifier |definition|
+//@[14:15)      Colon |:|
+//@[16:18)      StringSyntax
+//@[16:18)       StringComplete |''|
+//@[18:20)     NewLine |\r\n|
+  }
+//@[2:3)     RightBrace |}|
+//@[3:5)   NewLine |\r\n|
+  identity: {
+//@[2:46)   ObjectPropertySyntax
+//@[2:10)    IdentifierSyntax
+//@[2:10)     Identifier |identity|
+//@[10:11)    Colon |:|
+//@[12:46)    ObjectSyntax
+//@[12:13)     LeftBrace |{|
+//@[13:15)     NewLine |\r\n|
+    type: 'SystemAssigned'
+//@[4:26)     ObjectPropertySyntax
+//@[4:8)      IdentifierSyntax
+//@[4:8)       Identifier |type|
+//@[8:9)      Colon |:|
+//@[10:26)      StringSyntax
+//@[10:26)       StringComplete |'SystemAssigned'|
+//@[26:28)     NewLine |\r\n|
+  }
+//@[2:3)     RightBrace |}|
+//@[3:5)   NewLine |\r\n|
+  extendedLocation: {}
+//@[2:22)   ObjectPropertySyntax
+//@[2:18)    IdentifierSyntax
+//@[2:18)     Identifier |extendedLocation|
+//@[18:19)    Colon |:|
+//@[20:22)    ObjectSyntax
+//@[20:21)     LeftBrace |{|
+//@[21:22)     RightBrace |}|
+//@[22:24)   NewLine |\r\n|
+  sku: {}
+//@[2:9)   ObjectPropertySyntax
+//@[2:5)    IdentifierSyntax
+//@[2:5)     Identifier |sku|
+//@[5:6)    Colon |:|
+//@[7:9)    ObjectSyntax
+//@[7:8)     LeftBrace |{|
+//@[8:9)     RightBrace |}|
+//@[9:11)   NewLine |\r\n|
+  kind: 'V1'
+//@[2:12)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |kind|
+//@[6:7)    Colon |:|
+//@[8:12)    StringSyntax
+//@[8:12)     StringComplete |'V1'|
+//@[12:14)   NewLine |\r\n|
+  managedBy: 'string'
+//@[2:21)   ObjectPropertySyntax
+//@[2:11)    IdentifierSyntax
+//@[2:11)     Identifier |managedBy|
+//@[11:12)    Colon |:|
+//@[13:21)    StringSyntax
+//@[13:21)     StringComplete |'string'|
+//@[21:23)   NewLine |\r\n|
+  mangedByExtended: [
+//@[2:48)   ObjectPropertySyntax
+//@[2:18)    IdentifierSyntax
+//@[2:18)     Identifier |mangedByExtended|
+//@[18:19)    Colon |:|
+//@[20:48)    ArraySyntax
+//@[20:21)     LeftSquare |[|
+//@[21:23)     NewLine |\r\n|
+   'str1'
+//@[3:9)     ArrayItemSyntax
+//@[3:9)      StringSyntax
+//@[3:9)       StringComplete |'str1'|
+//@[9:11)     NewLine |\r\n|
+   'str2'
+//@[3:9)     ArrayItemSyntax
+//@[3:9)      StringSyntax
+//@[3:9)       StringComplete |'str2'|
+//@[9:11)     NewLine |\r\n|
+  ]
+//@[2:3)     RightSquare |]|
+//@[3:5)   NewLine |\r\n|
+  zones: [
+//@[2:37)   ObjectPropertySyntax
+//@[2:7)    IdentifierSyntax
+//@[2:7)     Identifier |zones|
+//@[7:8)    Colon |:|
+//@[9:37)    ArraySyntax
+//@[9:10)     LeftSquare |[|
+//@[10:12)     NewLine |\r\n|
+   'str1'
+//@[3:9)     ArrayItemSyntax
+//@[3:9)      StringSyntax
+//@[3:9)       StringComplete |'str1'|
+//@[9:11)     NewLine |\r\n|
+   'str2'
+//@[3:9)     ArrayItemSyntax
+//@[3:9)      StringSyntax
+//@[3:9)       StringComplete |'str2'|
+//@[9:11)     NewLine |\r\n|
+  ]
+//@[2:3)     RightSquare |]|
+//@[3:5)   NewLine |\r\n|
+  plan: {}
+//@[2:10)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |plan|
+//@[6:7)    Colon |:|
+//@[8:10)    ObjectSyntax
+//@[8:9)     LeftBrace |{|
+//@[9:10)     RightBrace |}|
+//@[10:12)   NewLine |\r\n|
+  eTag: ''
+//@[2:10)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |eTag|
+//@[6:7)    Colon |:|
+//@[8:10)    StringSyntax
+//@[8:10)     StringComplete |''|
+//@[10:12)   NewLine |\r\n|
+  scale: {}  
+//@[2:11)   ObjectPropertySyntax
+//@[2:7)    IdentifierSyntax
+//@[2:7)     Identifier |scale|
+//@[7:8)    Colon |:|
+//@[9:11)    ObjectSyntax
+//@[9:10)     LeftBrace |{|
+//@[10:11)     RightBrace |}|
+//@[13:15)   NewLine |\r\n|
+}
+//@[0:1)   RightBrace |}|
+//@[1:5) NewLine |\r\n\r\n|
+
+resource issue3000LogicApp2 'Microsoft.Logic/workflows@2019-05-01' = {
+//@[0:452) ResourceDeclarationSyntax
+//@[0:8)  Identifier |resource|
+//@[9:27)  IdentifierSyntax
+//@[9:27)   Identifier |issue3000LogicApp2|
+//@[28:66)  StringSyntax
+//@[28:66)   StringComplete |'Microsoft.Logic/workflows@2019-05-01'|
+//@[67:68)  Assignment |=|
+//@[69:452)  ObjectSyntax
+//@[69:70)   LeftBrace |{|
+//@[70:72)   NewLine |\r\n|
+  name: 'issue3000LogicApp2'
+//@[2:28)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |name|
+//@[6:7)    Colon |:|
+//@[8:28)    StringSyntax
+//@[8:28)     StringComplete |'issue3000LogicApp2'|
+//@[28:30)   NewLine |\r\n|
+  location: resourceGroup().location
+//@[2:36)   ObjectPropertySyntax
+//@[2:10)    IdentifierSyntax
+//@[2:10)     Identifier |location|
+//@[10:11)    Colon |:|
+//@[12:36)    PropertyAccessSyntax
+//@[12:27)     FunctionCallSyntax
+//@[12:25)      IdentifierSyntax
+//@[12:25)       Identifier |resourceGroup|
+//@[25:26)      LeftParen |(|
+//@[26:27)      RightParen |)|
+//@[27:28)     Dot |.|
+//@[28:36)     IdentifierSyntax
+//@[28:36)      Identifier |location|
+//@[36:38)   NewLine |\r\n|
+  properties: {
+//@[2:62)   ObjectPropertySyntax
+//@[2:12)    IdentifierSyntax
+//@[2:12)     Identifier |properties|
+//@[12:13)    Colon |:|
+//@[14:62)    ObjectSyntax
+//@[14:15)     LeftBrace |{|
+//@[15:17)     NewLine |\r\n|
+    state: 'Enabled'
+//@[4:20)     ObjectPropertySyntax
+//@[4:9)      IdentifierSyntax
+//@[4:9)       Identifier |state|
+//@[9:10)      Colon |:|
+//@[11:20)      StringSyntax
+//@[11:20)       StringComplete |'Enabled'|
+//@[20:22)     NewLine |\r\n|
+    definition: ''
+//@[4:18)     ObjectPropertySyntax
+//@[4:14)      IdentifierSyntax
+//@[4:14)       Identifier |definition|
+//@[14:15)      Colon |:|
+//@[16:18)      StringSyntax
+//@[16:18)       StringComplete |''|
+//@[18:20)     NewLine |\r\n|
+  }
+//@[2:3)     RightBrace |}|
+//@[3:5)   NewLine |\r\n|
+  identity: 'SystemAssigned'
+//@[2:28)   ObjectPropertySyntax
+//@[2:10)    IdentifierSyntax
+//@[2:10)     Identifier |identity|
+//@[10:11)    Colon |:|
+//@[12:28)    StringSyntax
+//@[12:28)     StringComplete |'SystemAssigned'|
+//@[28:30)   NewLine |\r\n|
+  extendedLocation: 'eastus'
+//@[2:28)   ObjectPropertySyntax
+//@[2:18)    IdentifierSyntax
+//@[2:18)     Identifier |extendedLocation|
+//@[18:19)    Colon |:|
+//@[20:28)    StringSyntax
+//@[20:28)     StringComplete |'eastus'|
+//@[28:30)   NewLine |\r\n|
+  sku: 'Basic'
+//@[2:14)   ObjectPropertySyntax
+//@[2:5)    IdentifierSyntax
+//@[2:5)     Identifier |sku|
+//@[5:6)    Colon |:|
+//@[7:14)    StringSyntax
+//@[7:14)     StringComplete |'Basic'|
+//@[14:16)   NewLine |\r\n|
+  kind: {
+//@[2:30)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |kind|
+//@[6:7)    Colon |:|
+//@[8:30)    ObjectSyntax
+//@[8:9)     LeftBrace |{|
+//@[9:11)     NewLine |\r\n|
+    name: 'V1'
+//@[4:14)     ObjectPropertySyntax
+//@[4:8)      IdentifierSyntax
+//@[4:8)       Identifier |name|
+//@[8:9)      Colon |:|
+//@[10:14)      StringSyntax
+//@[10:14)       StringComplete |'V1'|
+//@[14:16)     NewLine |\r\n|
+  }
+//@[2:3)     RightBrace |}|
+//@[3:5)   NewLine |\r\n|
+  managedBy: {}
+//@[2:15)   ObjectPropertySyntax
+//@[2:11)    IdentifierSyntax
+//@[2:11)     Identifier |managedBy|
+//@[11:12)    Colon |:|
+//@[13:15)    ObjectSyntax
+//@[13:14)     LeftBrace |{|
+//@[14:15)     RightBrace |}|
+//@[15:17)   NewLine |\r\n|
+  mangedByExtended: [
+//@[2:40)   ObjectPropertySyntax
+//@[2:18)    IdentifierSyntax
+//@[2:18)     Identifier |mangedByExtended|
+//@[18:19)    Colon |:|
+//@[20:40)    ArraySyntax
+//@[20:21)     LeftSquare |[|
+//@[21:23)     NewLine |\r\n|
+   {}
+//@[3:5)     ArrayItemSyntax
+//@[3:5)      ObjectSyntax
+//@[3:4)       LeftBrace |{|
+//@[4:5)       RightBrace |}|
+//@[5:7)     NewLine |\r\n|
+   {}
+//@[3:5)     ArrayItemSyntax
+//@[3:5)      ObjectSyntax
+//@[3:4)       LeftBrace |{|
+//@[4:5)       RightBrace |}|
+//@[5:7)     NewLine |\r\n|
+  ]
+//@[2:3)     RightSquare |]|
+//@[3:5)   NewLine |\r\n|
+  zones: [
+//@[2:29)   ObjectPropertySyntax
+//@[2:7)    IdentifierSyntax
+//@[2:7)     Identifier |zones|
+//@[7:8)    Colon |:|
+//@[9:29)    ArraySyntax
+//@[9:10)     LeftSquare |[|
+//@[10:12)     NewLine |\r\n|
+   {}
+//@[3:5)     ArrayItemSyntax
+//@[3:5)      ObjectSyntax
+//@[3:4)       LeftBrace |{|
+//@[4:5)       RightBrace |}|
+//@[5:7)     NewLine |\r\n|
+   {}
+//@[3:5)     ArrayItemSyntax
+//@[3:5)      ObjectSyntax
+//@[3:4)       LeftBrace |{|
+//@[4:5)       RightBrace |}|
+//@[5:7)     NewLine |\r\n|
+  ]
+//@[2:3)     RightSquare |]|
+//@[3:5)   NewLine |\r\n|
+  plan: ''
+//@[2:10)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |plan|
+//@[6:7)    Colon |:|
+//@[8:10)    StringSyntax
+//@[8:10)     StringComplete |''|
+//@[10:12)   NewLine |\r\n|
+  eTag: {}
+//@[2:10)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |eTag|
+//@[6:7)    Colon |:|
+//@[8:10)    ObjectSyntax
+//@[8:9)     LeftBrace |{|
+//@[9:10)     RightBrace |}|
+//@[10:12)   NewLine |\r\n|
+  scale: [
+//@[2:21)   ObjectPropertySyntax
+//@[2:7)    IdentifierSyntax
+//@[2:7)     Identifier |scale|
+//@[7:8)    Colon |:|
+//@[9:21)    ArraySyntax
+//@[9:10)     LeftSquare |[|
+//@[10:12)     NewLine |\r\n|
+  {}
+//@[2:4)     ArrayItemSyntax
+//@[2:4)      ObjectSyntax
+//@[2:3)       LeftBrace |{|
+//@[3:4)       RightBrace |}|
+//@[4:6)     NewLine |\r\n|
+  ]  
+//@[2:3)     RightSquare |]|
+//@[5:7)   NewLine |\r\n|
+}
+//@[0:1)   RightBrace |}|
+//@[1:5) NewLine |\r\n\r\n|
+
+resource issue3000stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+//@[0:234) ResourceDeclarationSyntax
+//@[0:8)  Identifier |resource|
+//@[9:21)  IdentifierSyntax
+//@[9:21)   Identifier |issue3000stg|
+//@[22:68)  StringSyntax
+//@[22:68)   StringComplete |'Microsoft.Storage/storageAccounts@2021-04-01'|
+//@[69:70)  Assignment |=|
+//@[71:234)  ObjectSyntax
+//@[71:72)   LeftBrace |{|
+//@[72:74)   NewLine |\r\n|
+  name: 'issue3000stg'
+//@[2:22)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |name|
+//@[6:7)    Colon |:|
+//@[8:22)    StringSyntax
+//@[8:22)     StringComplete |'issue3000stg'|
+//@[22:24)   NewLine |\r\n|
+  kind: 'StorageV2'
+//@[2:19)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |kind|
+//@[6:7)    Colon |:|
+//@[8:19)    StringSyntax
+//@[8:19)     StringComplete |'StorageV2'|
+//@[19:21)   NewLine |\r\n|
+  location: 'West US'
+//@[2:21)   ObjectPropertySyntax
+//@[2:10)    IdentifierSyntax
+//@[2:10)     Identifier |location|
+//@[10:11)    Colon |:|
+//@[12:21)    StringSyntax
+//@[12:21)     StringComplete |'West US'|
+//@[21:23)   NewLine |\r\n|
+  sku: {
+//@[2:42)   ObjectPropertySyntax
+//@[2:5)    IdentifierSyntax
+//@[2:5)     Identifier |sku|
+//@[5:6)    Colon |:|
+//@[7:42)    ObjectSyntax
+//@[7:8)     LeftBrace |{|
+//@[8:10)     NewLine |\r\n|
+    name: 'Premium_LRS'    
+//@[4:23)     ObjectPropertySyntax
+//@[4:8)      IdentifierSyntax
+//@[4:8)       Identifier |name|
+//@[8:9)      Colon |:|
+//@[10:23)      StringSyntax
+//@[10:23)       StringComplete |'Premium_LRS'|
+//@[27:29)     NewLine |\r\n|
+  }
+//@[2:3)     RightBrace |}|
+//@[3:5)   NewLine |\r\n|
+  madeUpProperty: {}
+//@[2:20)   ObjectPropertySyntax
+//@[2:16)    IdentifierSyntax
+//@[2:16)     Identifier |madeUpProperty|
+//@[16:17)    Colon |:|
+//@[18:20)    ObjectSyntax
+//@[18:19)     LeftBrace |{|
+//@[19:20)     RightBrace |}|
+//@[20:22)   NewLine |\r\n|
+  managedByExtended: []
+//@[2:23)   ObjectPropertySyntax
+//@[2:19)    IdentifierSyntax
+//@[2:19)     Identifier |managedByExtended|
+//@[19:20)    Colon |:|
+//@[21:23)    ArraySyntax
+//@[21:22)     LeftSquare |[|
+//@[22:23)     RightSquare |]|
+//@[23:25)   NewLine |\r\n|
+}
+//@[0:1)   RightBrace |}|
+//@[1:5) NewLine |\r\n\r\n|
+
+var issue3000stgMadeUpProperty = issue3000stg.madeUpProperty
+//@[0:60) VariableDeclarationSyntax
+//@[0:3)  Identifier |var|
+//@[4:30)  IdentifierSyntax
+//@[4:30)   Identifier |issue3000stgMadeUpProperty|
+//@[31:32)  Assignment |=|
+//@[33:60)  PropertyAccessSyntax
+//@[33:45)   VariableAccessSyntax
+//@[33:45)    IdentifierSyntax
+//@[33:45)     Identifier |issue3000stg|
+//@[45:46)   Dot |.|
+//@[46:60)   IdentifierSyntax
+//@[46:60)    Identifier |madeUpProperty|
+//@[60:62) NewLine |\r\n|
+var issue3000stgManagedBy = issue3000stg.managedBy
+//@[0:50) VariableDeclarationSyntax
+//@[0:3)  Identifier |var|
+//@[4:25)  IdentifierSyntax
+//@[4:25)   Identifier |issue3000stgManagedBy|
+//@[26:27)  Assignment |=|
+//@[28:50)  PropertyAccessSyntax
+//@[28:40)   VariableAccessSyntax
+//@[28:40)    IdentifierSyntax
+//@[28:40)     Identifier |issue3000stg|
+//@[40:41)   Dot |.|
+//@[41:50)   IdentifierSyntax
+//@[41:50)    Identifier |managedBy|
+//@[50:52) NewLine |\r\n|
+var issue3000stgManagedByExtended = issue3000stg.managedByExtended
+//@[0:66) VariableDeclarationSyntax
+//@[0:3)  Identifier |var|
+//@[4:33)  IdentifierSyntax
+//@[4:33)   Identifier |issue3000stgManagedByExtended|
+//@[34:35)  Assignment |=|
+//@[36:66)  PropertyAccessSyntax
+//@[36:48)   VariableAccessSyntax
+//@[36:48)    IdentifierSyntax
+//@[36:48)     Identifier |issue3000stg|
+//@[48:49)   Dot |.|
+//@[49:66)   IdentifierSyntax
+//@[49:66)    Identifier |managedByExtended|
+//@[66:70) NewLine |\r\n\r\n|
+
+param dataCollectionRule object
+//@[0:31) ParameterDeclarationSyntax
+//@[0:5)  Identifier |param|
+//@[6:24)  IdentifierSyntax
+//@[6:24)   Identifier |dataCollectionRule|
+//@[25:31)  TypeSyntax
+//@[25:31)   Identifier |object|
+//@[31:33) NewLine |\r\n|
+param tags object
+//@[0:17) ParameterDeclarationSyntax
+//@[0:5)  Identifier |param|
+//@[6:10)  IdentifierSyntax
+//@[6:10)   Identifier |tags|
+//@[11:17)  TypeSyntax
+//@[11:17)   Identifier |object|
+//@[17:21) NewLine |\r\n\r\n|
+
+var defaultLogAnalyticsWorkspace = {
+//@[0:88) VariableDeclarationSyntax
+//@[0:3)  Identifier |var|
+//@[4:32)  IdentifierSyntax
+//@[4:32)   Identifier |defaultLogAnalyticsWorkspace|
+//@[33:34)  Assignment |=|
+//@[35:88)  ObjectSyntax
+//@[35:36)   LeftBrace |{|
+//@[36:38)   NewLine |\r\n|
+  subscriptionId: subscription().subscriptionId
+//@[2:47)   ObjectPropertySyntax
+//@[2:16)    IdentifierSyntax
+//@[2:16)     Identifier |subscriptionId|
+//@[16:17)    Colon |:|
+//@[18:47)    PropertyAccessSyntax
+//@[18:32)     FunctionCallSyntax
+//@[18:30)      IdentifierSyntax
+//@[18:30)       Identifier |subscription|
+//@[30:31)      LeftParen |(|
+//@[31:32)      RightParen |)|
+//@[32:33)     Dot |.|
+//@[33:47)     IdentifierSyntax
+//@[33:47)      Identifier |subscriptionId|
+//@[47:49)   NewLine |\r\n|
+}
+//@[0:1)   RightBrace |}|
+//@[1:5) NewLine |\r\n\r\n|
+
+resource logAnalyticsWorkspaces 'Microsoft.OperationalInsights/workspaces@2020-10-01' existing = [for logAnalyticsWorkspace in dataCollectionRule.destinations.logAnalyticsWorkspaces: {
+//@[0:364) ResourceDeclarationSyntax
+//@[0:8)  Identifier |resource|
+//@[9:31)  IdentifierSyntax
+//@[9:31)   Identifier |logAnalyticsWorkspaces|
+//@[32:85)  StringSyntax
+//@[32:85)   StringComplete |'Microsoft.OperationalInsights/workspaces@2020-10-01'|
+//@[86:94)  Identifier |existing|
+//@[95:96)  Assignment |=|
+//@[97:364)  ForSyntax
+//@[97:98)   LeftSquare |[|
+//@[98:101)   Identifier |for|
+//@[102:123)   LocalVariableSyntax
+//@[102:123)    IdentifierSyntax
+//@[102:123)     Identifier |logAnalyticsWorkspace|
+//@[124:126)   Identifier |in|
+//@[127:181)   PropertyAccessSyntax
+//@[127:158)    PropertyAccessSyntax
+//@[127:145)     VariableAccessSyntax
+//@[127:145)      IdentifierSyntax
+//@[127:145)       Identifier |dataCollectionRule|
+//@[145:146)     Dot |.|
+//@[146:158)     IdentifierSyntax
+//@[146:158)      Identifier |destinations|
+//@[158:159)    Dot |.|
+//@[159:181)    IdentifierSyntax
+//@[159:181)     Identifier |logAnalyticsWorkspaces|
+//@[181:182)   Colon |:|
+//@[183:363)   ObjectSyntax
+//@[183:184)    LeftBrace |{|
+//@[184:186)    NewLine |\r\n|
+  name: logAnalyticsWorkspace.name
+//@[2:34)    ObjectPropertySyntax
+//@[2:6)     IdentifierSyntax
+//@[2:6)      Identifier |name|
+//@[6:7)     Colon |:|
+//@[8:34)     PropertyAccessSyntax
+//@[8:29)      VariableAccessSyntax
+//@[8:29)       IdentifierSyntax
+//@[8:29)        Identifier |logAnalyticsWorkspace|
+//@[29:30)      Dot |.|
+//@[30:34)      IdentifierSyntax
+//@[30:34)       Identifier |name|
+//@[34:36)    NewLine |\r\n|
+  scope: resourceGroup( union( defaultLogAnalyticsWorkspace, logAnalyticsWorkspace ).subscriptionId, logAnalyticsWorkspace.resourceGroup )
+//@[2:138)    ObjectPropertySyntax
+//@[2:7)     IdentifierSyntax
+//@[2:7)      Identifier |scope|
+//@[7:8)     Colon |:|
+//@[9:138)     FunctionCallSyntax
+//@[9:22)      IdentifierSyntax
+//@[9:22)       Identifier |resourceGroup|
+//@[22:23)      LeftParen |(|
+//@[24:100)      FunctionArgumentSyntax
+//@[24:99)       PropertyAccessSyntax
+//@[24:84)        FunctionCallSyntax
+//@[24:29)         IdentifierSyntax
+//@[24:29)          Identifier |union|
+//@[29:30)         LeftParen |(|
+//@[31:60)         FunctionArgumentSyntax
+//@[31:59)          VariableAccessSyntax
+//@[31:59)           IdentifierSyntax
+//@[31:59)            Identifier |defaultLogAnalyticsWorkspace|
+//@[59:60)          Comma |,|
+//@[61:82)         FunctionArgumentSyntax
+//@[61:82)          VariableAccessSyntax
+//@[61:82)           IdentifierSyntax
+//@[61:82)            Identifier |logAnalyticsWorkspace|
+//@[83:84)         RightParen |)|
+//@[84:85)        Dot |.|
+//@[85:99)        IdentifierSyntax
+//@[85:99)         Identifier |subscriptionId|
+//@[99:100)       Comma |,|
+//@[101:136)      FunctionArgumentSyntax
+//@[101:136)       PropertyAccessSyntax
+//@[101:122)        VariableAccessSyntax
+//@[101:122)         IdentifierSyntax
+//@[101:122)          Identifier |logAnalyticsWorkspace|
+//@[122:123)        Dot |.|
+//@[123:136)        IdentifierSyntax
+//@[123:136)         Identifier |resourceGroup|
+//@[137:138)      RightParen |)|
+//@[138:140)    NewLine |\r\n|
+}]
+//@[0:1)    RightBrace |}|
+//@[1:2)   RightSquare |]|
+//@[2:6) NewLine |\r\n\r\n|
+
+resource dataCollectionRuleRes 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
+//@[0:837) ResourceDeclarationSyntax
+//@[0:8)  Identifier |resource|
+//@[9:30)  IdentifierSyntax
+//@[9:30)   Identifier |dataCollectionRuleRes|
+//@[31:82)  StringSyntax
+//@[31:82)   StringComplete |'Microsoft.Insights/dataCollectionRules@2021-04-01'|
+//@[83:84)  Assignment |=|
+//@[85:837)  ObjectSyntax
+//@[85:86)   LeftBrace |{|
+//@[86:88)   NewLine |\r\n|
+  name: dataCollectionRule.name
+//@[2:31)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |name|
+//@[6:7)    Colon |:|
+//@[8:31)    PropertyAccessSyntax
+//@[8:26)     VariableAccessSyntax
+//@[8:26)      IdentifierSyntax
+//@[8:26)       Identifier |dataCollectionRule|
+//@[26:27)     Dot |.|
+//@[27:31)     IdentifierSyntax
+//@[27:31)      Identifier |name|
+//@[31:33)   NewLine |\r\n|
+  location: dataCollectionRule.location
+//@[2:39)   ObjectPropertySyntax
+//@[2:10)    IdentifierSyntax
+//@[2:10)     Identifier |location|
+//@[10:11)    Colon |:|
+//@[12:39)    PropertyAccessSyntax
+//@[12:30)     VariableAccessSyntax
+//@[12:30)      IdentifierSyntax
+//@[12:30)       Identifier |dataCollectionRule|
+//@[30:31)     Dot |.|
+//@[31:39)     IdentifierSyntax
+//@[31:39)      Identifier |location|
+//@[39:41)   NewLine |\r\n|
+  tags: tags
+//@[2:12)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |tags|
+//@[6:7)    Colon |:|
+//@[8:12)    VariableAccessSyntax
+//@[8:12)     IdentifierSyntax
+//@[8:12)      Identifier |tags|
+//@[12:14)   NewLine |\r\n|
+  kind: dataCollectionRule.kind
+//@[2:31)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |kind|
+//@[6:7)    Colon |:|
+//@[8:31)    PropertyAccessSyntax
+//@[8:26)     VariableAccessSyntax
+//@[8:26)      IdentifierSyntax
+//@[8:26)       Identifier |dataCollectionRule|
+//@[26:27)     Dot |.|
+//@[27:31)     IdentifierSyntax
+//@[27:31)      Identifier |kind|
+//@[31:33)   NewLine |\r\n|
+  properties: {
+//@[2:625)   ObjectPropertySyntax
+//@[2:12)    IdentifierSyntax
+//@[2:12)     Identifier |properties|
+//@[12:13)    Colon |:|
+//@[14:625)    ObjectSyntax
+//@[14:15)     LeftBrace |{|
+//@[15:17)     NewLine |\r\n|
+    description: dataCollectionRule.description
+//@[4:47)     ObjectPropertySyntax
+//@[4:15)      IdentifierSyntax
+//@[4:15)       Identifier |description|
+//@[15:16)      Colon |:|
+//@[17:47)      PropertyAccessSyntax
+//@[17:35)       VariableAccessSyntax
+//@[17:35)        IdentifierSyntax
+//@[17:35)         Identifier |dataCollectionRule|
+//@[35:36)       Dot |.|
+//@[36:47)       IdentifierSyntax
+//@[36:47)        Identifier |description|
+//@[47:49)     NewLine |\r\n|
+    destinations: union(empty(dataCollectionRule.destinations.azureMonitorMetrics.name) ? {} : {
+//@[4:460)     ObjectPropertySyntax
+//@[4:16)      IdentifierSyntax
+//@[4:16)       Identifier |destinations|
+//@[16:17)      Colon |:|
+//@[18:460)      FunctionCallSyntax
+//@[18:23)       IdentifierSyntax
+//@[18:23)        Identifier |union|
+//@[23:24)       LeftParen |(|
+//@[24:215)       FunctionArgumentSyntax
+//@[24:214)        TernaryOperationSyntax
+//@[24:87)         FunctionCallSyntax
+//@[24:29)          IdentifierSyntax
+//@[24:29)           Identifier |empty|
+//@[29:30)          LeftParen |(|
+//@[30:86)          FunctionArgumentSyntax
+//@[30:86)           PropertyAccessSyntax
+//@[30:81)            PropertyAccessSyntax
+//@[30:61)             PropertyAccessSyntax
+//@[30:48)              VariableAccessSyntax
+//@[30:48)               IdentifierSyntax
+//@[30:48)                Identifier |dataCollectionRule|
+//@[48:49)              Dot |.|
+//@[49:61)              IdentifierSyntax
+//@[49:61)               Identifier |destinations|
+//@[61:62)             Dot |.|
+//@[62:81)             IdentifierSyntax
+//@[62:81)              Identifier |azureMonitorMetrics|
+//@[81:82)            Dot |.|
+//@[82:86)            IdentifierSyntax
+//@[82:86)             Identifier |name|
+//@[86:87)          RightParen |)|
+//@[88:89)         Question |?|
+//@[90:92)         ObjectSyntax
+//@[90:91)          LeftBrace |{|
+//@[91:92)          RightBrace |}|
+//@[93:94)         Colon |:|
+//@[95:214)         ObjectSyntax
+//@[95:96)          LeftBrace |{|
+//@[96:98)          NewLine |\r\n|
+      azureMonitorMetrics: {
+//@[6:109)          ObjectPropertySyntax
+//@[6:25)           IdentifierSyntax
+//@[6:25)            Identifier |azureMonitorMetrics|
+//@[25:26)           Colon |:|
+//@[27:109)           ObjectSyntax
+//@[27:28)            LeftBrace |{|
+//@[28:30)            NewLine |\r\n|
+        name: dataCollectionRule.destinations.azureMonitorMetrics.name
+//@[8:70)            ObjectPropertySyntax
+//@[8:12)             IdentifierSyntax
+//@[8:12)              Identifier |name|
+//@[12:13)             Colon |:|
+//@[14:70)             PropertyAccessSyntax
+//@[14:65)              PropertyAccessSyntax
+//@[14:45)               PropertyAccessSyntax
+//@[14:32)                VariableAccessSyntax
+//@[14:32)                 IdentifierSyntax
+//@[14:32)                  Identifier |dataCollectionRule|
+//@[32:33)                Dot |.|
+//@[33:45)                IdentifierSyntax
+//@[33:45)                 Identifier |destinations|
+//@[45:46)               Dot |.|
+//@[46:65)               IdentifierSyntax
+//@[46:65)                Identifier |azureMonitorMetrics|
+//@[65:66)              Dot |.|
+//@[66:70)              IdentifierSyntax
+//@[66:70)               Identifier |name|
+//@[70:72)            NewLine |\r\n|
+      }
+//@[6:7)            RightBrace |}|
+//@[7:9)          NewLine |\r\n|
+    },{
+//@[4:5)          RightBrace |}|
+//@[5:6)        Comma |,|
+//@[6:250)       FunctionArgumentSyntax
+//@[6:250)        ObjectSyntax
+//@[6:7)         LeftBrace |{|
+//@[7:9)         NewLine |\r\n|
+      logAnalytics: [for (logAnalyticsWorkspace, i) in dataCollectionRule.destinations.logAnalyticsWorkspaces: {
+//@[6:234)         ObjectPropertySyntax
+//@[6:18)          IdentifierSyntax
+//@[6:18)           Identifier |logAnalytics|
+//@[18:19)          Colon |:|
+//@[20:234)          ForSyntax
+//@[20:21)           LeftSquare |[|
+//@[21:24)           Identifier |for|
+//@[25:51)           ForVariableBlockSyntax
+//@[25:26)            LeftParen |(|
+//@[26:47)            LocalVariableSyntax
+//@[26:47)             IdentifierSyntax
+//@[26:47)              Identifier |logAnalyticsWorkspace|
+//@[47:48)            Comma |,|
+//@[49:50)            LocalVariableSyntax
+//@[49:50)             IdentifierSyntax
+//@[49:50)              Identifier |i|
+//@[50:51)            RightParen |)|
+//@[52:54)           Identifier |in|
+//@[55:109)           PropertyAccessSyntax
+//@[55:86)            PropertyAccessSyntax
+//@[55:73)             VariableAccessSyntax
+//@[55:73)              IdentifierSyntax
+//@[55:73)               Identifier |dataCollectionRule|
+//@[73:74)             Dot |.|
+//@[74:86)             IdentifierSyntax
+//@[74:86)              Identifier |destinations|
+//@[86:87)            Dot |.|
+//@[87:109)            IdentifierSyntax
+//@[87:109)             Identifier |logAnalyticsWorkspaces|
+//@[109:110)           Colon |:|
+//@[111:233)           ObjectSyntax
+//@[111:112)            LeftBrace |{|
+//@[112:114)            NewLine |\r\n|
+        name: logAnalyticsWorkspace.destinationName
+//@[8:51)            ObjectPropertySyntax
+//@[8:12)             IdentifierSyntax
+//@[8:12)              Identifier |name|
+//@[12:13)             Colon |:|
+//@[14:51)             PropertyAccessSyntax
+//@[14:35)              VariableAccessSyntax
+//@[14:35)               IdentifierSyntax
+//@[14:35)                Identifier |logAnalyticsWorkspace|
+//@[35:36)              Dot |.|
+//@[36:51)              IdentifierSyntax
+//@[36:51)               Identifier |destinationName|
+//@[51:53)            NewLine |\r\n|
+        workspaceResourceId: logAnalyticsWorkspaces[i].id
+//@[8:57)            ObjectPropertySyntax
+//@[8:27)             IdentifierSyntax
+//@[8:27)              Identifier |workspaceResourceId|
+//@[27:28)             Colon |:|
+//@[29:57)             PropertyAccessSyntax
+//@[29:54)              ArrayAccessSyntax
+//@[29:51)               VariableAccessSyntax
+//@[29:51)                IdentifierSyntax
+//@[29:51)                 Identifier |logAnalyticsWorkspaces|
+//@[51:52)               LeftSquare |[|
+//@[52:53)               VariableAccessSyntax
+//@[52:53)                IdentifierSyntax
+//@[52:53)                 Identifier |i|
+//@[53:54)               RightSquare |]|
+//@[54:55)              Dot |.|
+//@[55:57)              IdentifierSyntax
+//@[55:57)               Identifier |id|
+//@[57:59)            NewLine |\r\n|
+      }]
+//@[6:7)            RightBrace |}|
+//@[7:8)           RightSquare |]|
+//@[8:10)         NewLine |\r\n|
+    })
+//@[4:5)         RightBrace |}|
+//@[5:6)       RightParen |)|
+//@[6:8)     NewLine |\r\n|
+    dataSources: dataCollectionRule.dataSources
+//@[4:47)     ObjectPropertySyntax
+//@[4:15)      IdentifierSyntax
+//@[4:15)       Identifier |dataSources|
+//@[15:16)      Colon |:|
+//@[17:47)      PropertyAccessSyntax
+//@[17:35)       VariableAccessSyntax
+//@[17:35)        IdentifierSyntax
+//@[17:35)         Identifier |dataCollectionRule|
+//@[35:36)       Dot |.|
+//@[36:47)       IdentifierSyntax
+//@[36:47)        Identifier |dataSources|
+//@[47:49)     NewLine |\r\n|
+    dataFlows: dataCollectionRule.dataFlows
+//@[4:43)     ObjectPropertySyntax
+//@[4:13)      IdentifierSyntax
+//@[4:13)       Identifier |dataFlows|
+//@[13:14)      Colon |:|
+//@[15:43)      PropertyAccessSyntax
+//@[15:33)       VariableAccessSyntax
+//@[15:33)        IdentifierSyntax
+//@[15:33)         Identifier |dataCollectionRule|
+//@[33:34)       Dot |.|
+//@[34:43)       IdentifierSyntax
+//@[34:43)        Identifier |dataFlows|
+//@[43:45)     NewLine |\r\n|
+  }
+//@[2:3)     RightBrace |}|
+//@[3:5)   NewLine |\r\n|
+}
+//@[0:1)   RightBrace |}|
+//@[1:5) NewLine |\r\n\r\n|
+
+resource dataCollectionRuleRes2 'Microsoft.Insights/dataCollectionRules@2021-04-01' = {
+//@[0:445) ResourceDeclarationSyntax
+//@[0:8)  Identifier |resource|
+//@[9:31)  IdentifierSyntax
+//@[9:31)   Identifier |dataCollectionRuleRes2|
+//@[32:83)  StringSyntax
+//@[32:83)   StringComplete |'Microsoft.Insights/dataCollectionRules@2021-04-01'|
+//@[84:85)  Assignment |=|
+//@[86:445)  ObjectSyntax
+//@[86:87)   LeftBrace |{|
+//@[87:89)   NewLine |\r\n|
+  name: dataCollectionRule.name
+//@[2:31)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |name|
+//@[6:7)    Colon |:|
+//@[8:31)    PropertyAccessSyntax
+//@[8:26)     VariableAccessSyntax
+//@[8:26)      IdentifierSyntax
+//@[8:26)       Identifier |dataCollectionRule|
+//@[26:27)     Dot |.|
+//@[27:31)     IdentifierSyntax
+//@[27:31)      Identifier |name|
+//@[31:33)   NewLine |\r\n|
+  location: dataCollectionRule.location
+//@[2:39)   ObjectPropertySyntax
+//@[2:10)    IdentifierSyntax
+//@[2:10)     Identifier |location|
+//@[10:11)    Colon |:|
+//@[12:39)    PropertyAccessSyntax
+//@[12:30)     VariableAccessSyntax
+//@[12:30)      IdentifierSyntax
+//@[12:30)       Identifier |dataCollectionRule|
+//@[30:31)     Dot |.|
+//@[31:39)     IdentifierSyntax
+//@[31:39)      Identifier |location|
+//@[39:41)   NewLine |\r\n|
+  tags: tags
+//@[2:12)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |tags|
+//@[6:7)    Colon |:|
+//@[8:12)    VariableAccessSyntax
+//@[8:12)     IdentifierSyntax
+//@[8:12)      Identifier |tags|
+//@[12:14)   NewLine |\r\n|
+  kind: dataCollectionRule.kind
+//@[2:31)   ObjectPropertySyntax
+//@[2:6)    IdentifierSyntax
+//@[2:6)     Identifier |kind|
+//@[6:7)    Colon |:|
+//@[8:31)    PropertyAccessSyntax
+//@[8:26)     VariableAccessSyntax
+//@[8:26)      IdentifierSyntax
+//@[8:26)       Identifier |dataCollectionRule|
+//@[26:27)     Dot |.|
+//@[27:31)     IdentifierSyntax
+//@[27:31)      Identifier |kind|
+//@[31:33)   NewLine |\r\n|
+  properties: {
+//@[2:232)   ObjectPropertySyntax
+//@[2:12)    IdentifierSyntax
+//@[2:12)     Identifier |properties|
+//@[12:13)    Colon |:|
+//@[14:232)    ObjectSyntax
+//@[14:15)     LeftBrace |{|
+//@[15:17)     NewLine |\r\n|
+    description: dataCollectionRule.description
+//@[4:47)     ObjectPropertySyntax
+//@[4:15)      IdentifierSyntax
+//@[4:15)       Identifier |description|
+//@[15:16)      Colon |:|
+//@[17:47)      PropertyAccessSyntax
+//@[17:35)       VariableAccessSyntax
+//@[17:35)        IdentifierSyntax
+//@[17:35)         Identifier |dataCollectionRule|
+//@[35:36)       Dot |.|
+//@[36:47)       IdentifierSyntax
+//@[36:47)        Identifier |description|
+//@[47:49)     NewLine |\r\n|
+    destinations: empty([]) ? [for x in []: {}] : [for x in []: {}]
+//@[4:67)     ObjectPropertySyntax
+//@[4:16)      IdentifierSyntax
+//@[4:16)       Identifier |destinations|
+//@[16:17)      Colon |:|
+//@[18:67)      TernaryOperationSyntax
+//@[18:27)       FunctionCallSyntax
+//@[18:23)        IdentifierSyntax
+//@[18:23)         Identifier |empty|
+//@[23:24)        LeftParen |(|
+//@[24:26)        FunctionArgumentSyntax
+//@[24:26)         ArraySyntax
+//@[24:25)          LeftSquare |[|
+//@[25:26)          RightSquare |]|
+//@[26:27)        RightParen |)|
+//@[28:29)       Question |?|
+//@[30:47)       ForSyntax
+//@[30:31)        LeftSquare |[|
+//@[31:34)        Identifier |for|
+//@[35:36)        LocalVariableSyntax
+//@[35:36)         IdentifierSyntax
+//@[35:36)          Identifier |x|
+//@[37:39)        Identifier |in|
+//@[40:42)        ArraySyntax
+//@[40:41)         LeftSquare |[|
+//@[41:42)         RightSquare |]|
+//@[42:43)        Colon |:|
+//@[44:46)        ObjectSyntax
+//@[44:45)         LeftBrace |{|
+//@[45:46)         RightBrace |}|
+//@[46:47)        RightSquare |]|
+//@[48:49)       Colon |:|
+//@[50:67)       ForSyntax
+//@[50:51)        LeftSquare |[|
+//@[51:54)        Identifier |for|
+//@[55:56)        LocalVariableSyntax
+//@[55:56)         IdentifierSyntax
+//@[55:56)          Identifier |x|
+//@[57:59)        Identifier |in|
+//@[60:62)        ArraySyntax
+//@[60:61)         LeftSquare |[|
+//@[61:62)         RightSquare |]|
+//@[62:63)        Colon |:|
+//@[64:66)        ObjectSyntax
+//@[64:65)         LeftBrace |{|
+//@[65:66)         RightBrace |}|
+//@[66:67)        RightSquare |]|
+//@[67:69)     NewLine |\r\n|
+    dataSources: dataCollectionRule.dataSources
+//@[4:47)     ObjectPropertySyntax
+//@[4:15)      IdentifierSyntax
+//@[4:15)       Identifier |dataSources|
+//@[15:16)      Colon |:|
+//@[17:47)      PropertyAccessSyntax
+//@[17:35)       VariableAccessSyntax
+//@[17:35)        IdentifierSyntax
+//@[17:35)         Identifier |dataCollectionRule|
+//@[35:36)       Dot |.|
+//@[36:47)       IdentifierSyntax
+//@[36:47)        Identifier |dataSources|
+//@[47:49)     NewLine |\r\n|
+    dataFlows: dataCollectionRule.dataFlows
+//@[4:43)     ObjectPropertySyntax
+//@[4:13)      IdentifierSyntax
+//@[4:13)       Identifier |dataFlows|
+//@[13:14)      Colon |:|
+//@[15:43)      PropertyAccessSyntax
+//@[15:33)       VariableAccessSyntax
+//@[15:33)        IdentifierSyntax
+//@[15:33)         Identifier |dataCollectionRule|
+//@[33:34)       Dot |.|
+//@[34:43)       IdentifierSyntax
+//@[34:43)        Identifier |dataFlows|
+//@[43:45)     NewLine |\r\n|
+  }
+//@[2:3)     RightBrace |}|
+//@[3:5)   NewLine |\r\n|
 }
 //@[0:1)   RightBrace |}|
 //@[1:3) NewLine |\r\n|

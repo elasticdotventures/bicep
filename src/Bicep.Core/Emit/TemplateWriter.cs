@@ -9,6 +9,7 @@ using System.Linq;
 using Azure.Deployments.Core.Helpers;
 using Azure.Deployments.Core.Json;
 using Azure.Deployments.Expression.Expressions;
+using Azure.Deployments.Core.Definitions.Schema;
 using Bicep.Core.Extensions;
 using Bicep.Core.Parsing;
 using Bicep.Core.Semantics;
@@ -21,7 +22,7 @@ using Newtonsoft.Json.Linq;
 namespace Bicep.Core.Emit
 {
     // TODO: Are there discrepancies between parameter, variable, and output names between bicep and ARM?
-    public class TemplateWriter
+    public class TemplateWriter : ITemplateWriter
     {
         public const string GeneratorMetadataPath = "metadata._generator";
         public const string NestedDeploymentResourceType = AzResourceTypeProvider.ResourceTypeDeployments;
@@ -39,20 +40,20 @@ namespace Bicep.Core.Emit
             "metadata"
         }.ToImmutableArray();
 
-        private static readonly ImmutableHashSet<string> ResourcePropertiesToOmit = new [] {
+        private static readonly ImmutableHashSet<string> ResourcePropertiesToOmit = new[] {
             LanguageConstants.ResourceScopePropertyName,
             LanguageConstants.ResourceParentPropertyName,
             LanguageConstants.ResourceDependsOnPropertyName,
             LanguageConstants.ResourceNamePropertyName,
         }.ToImmutableHashSet();
 
-        private static readonly ImmutableHashSet<string> ModulePropertiesToOmit = new [] {
+        private static readonly ImmutableHashSet<string> ModulePropertiesToOmit = new[] {
             LanguageConstants.ModuleParamsPropertyName,
             LanguageConstants.ResourceScopePropertyName,
             LanguageConstants.ResourceDependsOnPropertyName,
         }.ToImmutableHashSet();
 
-        private static SemanticModel GetModuleSemanticModel(ModuleSymbol moduleSymbol)
+        private static ISemanticModel GetModuleSemanticModel(ModuleSymbol moduleSymbol)
         {
             if (!moduleSymbol.TryGetSemanticModel(out var moduleSemanticModel, out _))
             {
@@ -92,17 +93,18 @@ namespace Bicep.Core.Emit
 
         public void Write(JsonTextWriter writer)
         {
-            JToken template = GenerateTemplateWithoutHash();
-            var templateHash = TemplateHelpers.ComputeTemplateHash(template);
-            if (template.SelectToken(GeneratorMetadataPath) is not JObject generatorObject)
+            // Template is used for calcualting template hash, template jtoken is used for writing to file.
+            var (template, templateJToken) = GenerateTemplateWithoutHash();
+            var templateHash = TemplateHelpers.ComputeTemplateHash(template.ToJToken());
+            if (templateJToken.SelectToken(GeneratorMetadataPath) is not JObject generatorObject)
             {
                 throw new InvalidOperationException($"generated template doesn't contain a generator object at the path {GeneratorMetadataPath}");
             }
             generatorObject.Add("templateHash", templateHash);
-            template.WriteTo(writer);
+            templateJToken.WriteTo(writer);
         }
 
-        private JToken GenerateTemplateWithoutHash()
+        private (Template, JToken) GenerateTemplateWithoutHash()
         {
             // TODO: since we merely return a JToken, refactor the emitter logic to add properties to a JObject
             // instead of writing to a JsonWriter and converting it to JToken at the end
@@ -132,7 +134,8 @@ namespace Bicep.Core.Emit
 
             jsonWriter.WriteEndObject();
 
-            return stringWriter.ToString().FromJson<JToken>();
+            var content = stringWriter.ToString();
+            return (Template.FromJson<Template>(content), content.FromJson<JToken>());
         }
 
         private void EmitParametersIfPresent(JsonTextWriter jsonWriter, ExpressionEmitter emitter)
@@ -181,10 +184,8 @@ namespace Bicep.Core.Emit
 
         private void EmitParameter(JsonTextWriter jsonWriter, ParameterSymbol parameterSymbol, ExpressionEmitter emitter)
         {
-            // local function
-            static bool IsSecure(SyntaxBase? value) => value is BooleanLiteralSyntax boolLiteral && boolLiteral.Value;
-
-            if (!(SyntaxHelper.TryGetPrimitiveType(parameterSymbol.DeclaringParameter) is TypeSymbol primitiveType))
+            var declaringParameter = parameterSymbol.DeclaringParameter;
+            if (SyntaxHelper.TryGetPrimitiveType(declaringParameter) is not TypeSymbol primitiveType)
             {
                 // this should have been caught by the type checker long ago
                 throw new ArgumentException($"Unable to find primitive type for parameter {parameterSymbol.Name}");
@@ -192,58 +193,21 @@ namespace Bicep.Core.Emit
 
             jsonWriter.WriteStartObject();
 
-            if (parameterSymbol.DeclaringParameter.Decorators.Any())
+            var parameterType = SyntaxFactory.CreateStringLiteral(primitiveType.Name);
+            var parameterObject = SyntaxFactory.CreateObject(SyntaxFactory.CreateObjectProperty("type", parameterType).AsEnumerable());
+
+            if (declaringParameter.Modifier is ParameterDefaultValueSyntax defaultValueSyntax)
             {
-                var parameterType = SyntaxFactory.CreateStringLiteral(primitiveType.Name);
-                var parameterObject = SyntaxFactory.CreateObject(SyntaxFactory.CreateObjectProperty("type", parameterType).AsEnumerable());
-
-                if (parameterSymbol.Modifier is ParameterDefaultValueSyntax defaultValueSyntax)
-                {
-                    parameterObject = parameterObject.MergeProperty("defaultValue", defaultValueSyntax.DefaultValue);
-                }
-
-                parameterObject = EvaluateDecorators(parameterSymbol.DeclaringParameter, parameterObject, primitiveType);
-
-                foreach (var property in parameterObject.Properties)
-                {
-                    if (property.TryGetKeyText() is string propertyName)
-                    {
-                        emitter.EmitProperty(propertyName, property.Value);
-                    }
-                }
+                parameterObject = parameterObject.MergeProperty("defaultValue", defaultValueSyntax.DefaultValue);
             }
-            else
+
+            parameterObject = EvaluateDecorators(declaringParameter, parameterObject, primitiveType);
+
+            foreach (var property in parameterObject.Properties)
             {
-                // TODO: remove this before the 0.3 release.
-                switch (parameterSymbol.Modifier)
+                if (property.TryGetKeyText() is string propertyName)
                 {
-                    case null:
-                        emitter.EmitProperty("type", GetTemplateTypeName(primitiveType, secure: false));
-
-                        break;
-
-                    case ParameterDefaultValueSyntax defaultValueSyntax:
-                        emitter.EmitProperty("type", GetTemplateTypeName(primitiveType, secure: false));
-                        emitter.EmitProperty("defaultValue", defaultValueSyntax.DefaultValue);
-
-                        break;
-
-                    case ObjectSyntax modifierSyntax:
-                        // this would throw on duplicate properties in the object node - we are relying on emitter checking for errors at the beginning
-                        var properties = modifierSyntax.ToNamedPropertyValueDictionary();
-
-                        emitter.EmitProperty("type", GetTemplateTypeName(primitiveType, IsSecure(properties.TryGetValue("secure"))));
-
-                        // relying on validation here as well (not all of the properties are valid in all contexts)
-                        foreach (string modifierPropertyName in ParameterModifierPropertiesToEmitDirectly)
-                        {
-                            emitter.EmitOptionalPropertyExpression(modifierPropertyName, properties.TryGetValue(modifierPropertyName));
-                        }
-
-                        emitter.EmitOptionalPropertyExpression("defaultValue", properties.TryGetValue(LanguageConstants.ParameterDefaultPropertyName));
-                        emitter.EmitOptionalPropertyExpression("allowedValues", properties.TryGetValue(LanguageConstants.ParameterAllowedPropertyName));
-
-                        break;
+                    emitter.EmitProperty(propertyName, property.Value);
                 }
             }
 
@@ -334,7 +298,7 @@ namespace Bicep.Core.Emit
         {
             jsonWriter.WriteStartObject();
 
-            var typeReference = EmitHelpers.GetTypeReference(resourceSymbol);
+            var typeReference = resourceSymbol.GetResourceTypeReference();
 
             // Note: conditions STACK with nesting.
             //
@@ -391,7 +355,7 @@ namespace Bicep.Core.Emit
             else if (conditions.Count > 1)
             {
                 var @operator = new BinaryOperationSyntax(
-                    conditions[0], 
+                    conditions[0],
                     SyntaxFactory.CreateToken(TokenType.LogicalAnd),
                     conditions[1]);
                 for (var i = 2; i < conditions.Count; i++)
@@ -434,7 +398,7 @@ namespace Bicep.Core.Emit
         private static void EmitModuleParameters(JsonTextWriter jsonWriter, ModuleSymbol moduleSymbol, ExpressionEmitter emitter)
         {
             var paramsValue = moduleSymbol.SafeGetBodyPropertyValue(LanguageConstants.ModuleParamsPropertyName);
-            if (paramsValue is not ObjectSyntax paramsObjectSyntax)
+            if(paramsValue is not ObjectSyntax paramsObjectSyntax)
             {
                 // 'params' is optional if the module has no required params
                 return;
@@ -470,7 +434,7 @@ namespace Bicep.Core.Emit
                 else
                 {
                     // the value is not a for-expression - can emit normally
-                    emitter.EmitProperty("value", propertySyntax.Value);
+                    emitter.EmitModuleParameterValue(propertySyntax.Value);
                 }
 
                 jsonWriter.WriteEndObject();
@@ -556,7 +520,12 @@ namespace Bicep.Core.Emit
                 jsonWriter.WritePropertyName("template");
                 {
                     var moduleSemanticModel = GetModuleSemanticModel(moduleSymbol);
-                    var moduleWriter = new TemplateWriter(moduleSemanticModel, this.assemblyFileVersion);
+                    ITemplateWriter moduleWriter = moduleSemanticModel switch
+                    {
+                        ArmTemplateSemanticModel armTemplateModel => new ArmTemplateWriter(armTemplateModel),
+                        SemanticModel bicepModel => new TemplateWriter(bicepModel, this.assemblyFileVersion),
+                        _ => throw new ArgumentException($"Unknown semantic model type: \"{moduleSemanticModel.GetType()}\"."),
+                    };
                     moduleWriter.Write(jsonWriter);
                 }
 
@@ -619,9 +588,9 @@ namespace Bicep.Core.Emit
 
                             break;
                         }
-                        
+
                         emitter.EmitResourceIdReference(moduleDependency, dependency.IndexExpression, newContext);
-                        
+
                         break;
                     default:
                         throw new InvalidOperationException($"Found dependency '{dependency.Resource.Name}' of unexpected type {dependency.GetType()}");

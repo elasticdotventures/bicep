@@ -12,10 +12,10 @@ using Bicep.Core.Syntax;
 using Bicep.Core.Syntax.Visitors;
 using Bicep.LangServer.IntegrationTests.Extensions;
 using Bicep.LanguageServer.Extensions;
-using Bicep.LanguageServer.Utils;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using OmniSharp.Extensions.LanguageServer.Client;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -34,12 +34,11 @@ namespace Bicep.LangServer.IntegrationTests
         [DynamicData(nameof(GetData), DynamicDataSourceType.Method, DynamicDataDisplayNameDeclaringType = typeof(DataSet), DynamicDataDisplayName = nameof(DataSet.GetDisplayName))]
         public async Task GoToDefinitionRequestOnValidSymbolReferenceShouldReturnLocationOfDeclaredSymbol(DataSet dataSet)
         {
-            var uri = DocumentUri.From($"/{dataSet.Name}");
-
-            using var client = await IntegrationTestHelper.StartServerWithTextAsync(dataSet.Bicep, uri);
-            var compilation = dataSet.CopyFilesAndCreateCompilation(TestContext, out _);
+            var compilation = dataSet.CopyFilesAndCreateCompilation(TestContext, out _, out var fileUri);
+            var uri = DocumentUri.From(fileUri);
+            using var client = await IntegrationTestHelper.StartServerWithTextAsync(this.TestContext, dataSet.Bicep, uri);
             var symbolTable = compilation.ReconstructSymbolTable();
-            var lineStarts = compilation.SyntaxTreeGrouping.EntryPoint.LineStarts;
+            var lineStarts = compilation.SourceFileGrouping.EntryPoint.LineStarts;
 
             // filter out symbols that don't have locations as well as locals with invalid identifiers
             // (locals are special because their full span is the same as the identifier span,
@@ -78,10 +77,10 @@ namespace Bicep.LangServer.IntegrationTests
         {
             var uri = DocumentUri.From($"/{dataSet.Name}");
 
-            using var client = await IntegrationTestHelper.StartServerWithTextAsync(dataSet.Bicep, uri);
-            var compilation = dataSet.CopyFilesAndCreateCompilation(TestContext, out _);
+            using var client = await IntegrationTestHelper.StartServerWithTextAsync(this.TestContext, dataSet.Bicep, uri);
+            var compilation = dataSet.CopyFilesAndCreateCompilation(TestContext, out _, out _);
             var symbolTable = compilation.ReconstructSymbolTable();
-            var lineStarts = compilation.SyntaxTreeGrouping.EntryPoint.LineStarts;
+            var lineStarts = compilation.SourceFileGrouping.EntryPoint.LineStarts;
 
             var undeclaredSymbolBindings = symbolTable.Where(pair => pair.Value is not DeclaredSymbol and not PropertySymbol);
 
@@ -90,10 +89,10 @@ namespace Bicep.LangServer.IntegrationTests
                 var response = await client.RequestDefinition(new DefinitionParams
                 {
                     TextDocument = new TextDocumentIdentifier(uri),
-                    Position = PositionHelper.GetPosition(lineStarts, syntax.Span.Position)
+                    Position = IntegrationTestHelper.GetPosition(lineStarts, syntax)
                 });
 
-                using (new AssertionScope().WithVisualCursor(compilation.SyntaxTreeGrouping.EntryPoint, syntax.Span))
+                using (new AssertionScope().WithVisualCursor(compilation.SourceFileGrouping.EntryPoint, syntax.Span))
                 {
                     // go to definition on a symbol that isn't declared by the user (like error or function symbol)
                     // should produce an empty response
@@ -109,15 +108,14 @@ namespace Bicep.LangServer.IntegrationTests
             // local function
             bool IsUnboundNode(IDictionary<SyntaxBase, Symbol> dictionary, SyntaxBase syntax) => dictionary.ContainsKey(syntax) == false && !(syntax is Token);
 
-            var uri = DocumentUri.From($"/{dataSet.Name}");
-
-            using var client = await IntegrationTestHelper.StartServerWithTextAsync(dataSet.Bicep, uri);
-            var compilation = dataSet.CopyFilesAndCreateCompilation(TestContext, out _);
+            var compilation = dataSet.CopyFilesAndCreateCompilation(TestContext, out _, out var fileUri);
+            var uri = DocumentUri.From(fileUri);
+            using var client = await IntegrationTestHelper.StartServerWithTextAsync(this.TestContext, dataSet.Bicep, uri);
             var symbolTable = compilation.ReconstructSymbolTable();
-            var lineStarts = compilation.SyntaxTreeGrouping.EntryPoint.LineStarts;
+            var lineStarts = compilation.SourceFileGrouping.EntryPoint.LineStarts;
 
             var unboundNodes = SyntaxAggregator.Aggregate(
-                source: compilation.SyntaxTreeGrouping.EntryPoint.ProgramSyntax,
+                source: compilation.SourceFileGrouping.EntryPoint.ProgramSyntax,
                 seed: new List<SyntaxBase>(),
                 function: (accumulated, syntax) =>
                 {
@@ -135,19 +133,10 @@ namespace Bicep.LangServer.IntegrationTests
 
             foreach (var syntax in unboundNodes)
             {
-                var offset = syntax switch
-                {
-                    // base expression could be a variable access which is bound and will throw off the test
-                    PropertyAccessSyntax propertyAccess => propertyAccess.PropertyName.Span.Position,
-                    ArrayAccessSyntax arrayAccess => arrayAccess.OpenSquare.Span.Position,
-
-                    _ => syntax.Span.Position
-                };
-
                 var response = await client.RequestDefinition(new DefinitionParams
                 {
                     TextDocument = new TextDocumentIdentifier(uri),
-                    Position = PositionHelper.GetPosition(lineStarts, offset)
+                    Position = IntegrationTestHelper.GetPosition(lineStarts, syntax)
                 });
 
                 // go to definition on a syntax node that isn't bound to a symbol should produce an empty response

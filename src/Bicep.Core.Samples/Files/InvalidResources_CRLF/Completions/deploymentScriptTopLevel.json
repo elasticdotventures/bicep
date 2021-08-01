@@ -14,11 +14,8 @@
     "insertTextMode": "adjustIndentation",
     "textEdit": {
       "range": {},
-      "newText": "dependsOn"
-    },
-    "commitCharacters": [
-      ":"
-    ]
+      "newText": "dependsOn:"
+    }
   },
   {
     "label": "identity",
@@ -35,11 +32,8 @@
     "insertTextMode": "adjustIndentation",
     "textEdit": {
       "range": {},
-      "newText": "identity"
-    },
-    "commitCharacters": [
-      ":"
-    ]
+      "newText": "identity:"
+    }
   },
   {
     "label": "location",
@@ -47,7 +41,7 @@
     "detail": "location (Required)",
     "documentation": {
       "kind": "markdown",
-      "value": "Type: `string`  \n"
+      "value": "Type: `string`  \nThe location of the ACI and the storage account for the deployment script.  \n"
     },
     "deprecated": false,
     "preselect": false,
@@ -56,11 +50,8 @@
     "insertTextMode": "adjustIndentation",
     "textEdit": {
       "range": {},
-      "newText": "location"
-    },
-    "commitCharacters": [
-      ":"
-    ]
+      "newText": "location:"
+    }
   },
   {
     "label": "name",
@@ -77,11 +68,8 @@
     "insertTextMode": "adjustIndentation",
     "textEdit": {
       "range": {},
-      "newText": "name"
-    },
-    "commitCharacters": [
-      ":"
-    ]
+      "newText": "name:"
+    }
   },
   {
     "label": "resource",
@@ -98,7 +86,7 @@
     }
   },
   {
-    "label": "resource",
+    "label": "resource-with-defaults",
     "kind": "snippet",
     "detail": "Nested resource with defaults",
     "documentation": {
@@ -106,31 +94,53 @@
       "value": "```bicep\nresource Identifier 'Type' = {\n  name: \n  properties: {\n    \n  }\n}\n```"
     },
     "deprecated": false,
-    "preselect": false,
-    "sortText": "2_resource",
+    "preselect": true,
+    "sortText": "2_resource-with-defaults",
     "insertTextFormat": "snippet",
     "insertTextMode": "adjustIndentation",
     "textEdit": {
       "range": {},
       "newText": "resource ${1:Identifier} '${2:Type}' = {\n  name: $3\n  properties: {\n    $0\n  }\n}"
+    },
+    "command": {
+      "command": "bicep.Telemetry",
+      "arguments": [
+        {
+          "EventName": "NestedResourceDeclarationSnippetInsertion",
+          "Properties": {
+            "name": "resource-with-defaults"
+          }
+        }
+      ]
     }
   },
   {
-    "label": "resource",
+    "label": "resource-without-defaults",
     "kind": "snippet",
     "detail": "Nested resource without defaults",
     "documentation": {
       "kind": "markdown",
-      "value": "```bicep\nresource Identifier 'Type' = {\n  name: \n  \n}\n\n```"
+      "value": "```bicep\nresource Identifier 'Type' = {\n  name: \n  \n}\n```"
     },
     "deprecated": false,
-    "preselect": false,
-    "sortText": "2_resource",
+    "preselect": true,
+    "sortText": "2_resource-without-defaults",
     "insertTextFormat": "snippet",
     "insertTextMode": "adjustIndentation",
     "textEdit": {
       "range": {},
-      "newText": "resource ${1:Identifier} '${2:Type}' = {\n  name: $3\n  $0\n}\n"
+      "newText": "resource ${1:Identifier} '${2:Type}' = {\n  name: $3\n  $0\n}"
+    },
+    "command": {
+      "command": "bicep.Telemetry",
+      "arguments": [
+        {
+          "EventName": "NestedResourceDeclarationSnippetInsertion",
+          "Properties": {
+            "name": "resource-without-defaults"
+          }
+        }
+      ]
     }
   },
   {
@@ -139,7 +149,7 @@
     "detail": "tags",
     "documentation": {
       "kind": "markdown",
-      "value": "Type: `Dictionary<string,String>`  \nResource tags.  \n"
+      "value": "Type: `DeploymentScriptTags`  \nResource tags.  \n"
     },
     "deprecated": false,
     "preselect": false,
@@ -148,10 +158,7 @@
     "insertTextMode": "adjustIndentation",
     "textEdit": {
       "range": {},
-      "newText": "tags"
-    },
-    "commitCharacters": [
-      ":"
-    ]
+      "newText": "tags:"
+    }
   }
 ]

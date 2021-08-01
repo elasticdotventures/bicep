@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Linq;
-using Bicep.Core.UnitTests.Assertions;
-using Bicep.Core.UnitTests.Utils;
+using Bicep.Core.Analyzers.Linter.Rules;
 using Bicep.Core.Diagnostics;
+using Bicep.Core.UnitTests.Assertions;
+using Bicep.Core.UnitTests.Diagnostics;
+using Bicep.Core.UnitTests.Utils;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
-using Bicep.Core.UnitTests.Diagnostics;
 
 namespace Bicep.Core.IntegrationTests
 {
@@ -104,8 +104,6 @@ output res2childid string = res2child.id
 
             using (new AssertionScope())
             {
-                diags.ExcludingMissingTypes().Should().BeEmpty();
-
                 template.Should().HaveValueAtPath("$.resources[0].name", "res1");
                 template.Should().NotHaveValueAtPath("$.resources[0].dependsOn");
 
@@ -260,7 +258,7 @@ resource vmExt 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = {
             {
                 template.Should().NotHaveValue();
                 diags.ExcludingMissingTypes().Should().HaveDiagnostics(new[] {
-                  ("BCP079", DiagnosticLevel.Error, "This expression is referencing its own declaration, which is not allowed."),
+                  ("BCP079", DiagnosticLevel.Error, "This expression is referencing its own declaration, which is not allowed.")
                 });
             }
         }
@@ -285,7 +283,7 @@ resource vmExt 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = {
                 template.Should().NotHaveValue();
                 diags.ExcludingMissingTypes().Should().HaveDiagnostics(new[] {
                   ("BCP080", DiagnosticLevel.Error, "The expression is involved in a cycle (\"vmExt\" -> \"vm\")."),
-                  ("BCP080", DiagnosticLevel.Error, "The expression is involved in a cycle (\"vm\" -> \"vmExt\")."),
+                  ("BCP080", DiagnosticLevel.Error, "The expression is involved in a cycle (\"vm\" -> \"vmExt\").")
                 });
             }
         }
@@ -379,7 +377,7 @@ resource res1 'Microsoft.Rp1/resource1@2020-06-01' = {
             {
                 template.Should().NotHaveValue();
                 diags.ExcludingMissingTypes().Should().HaveDiagnostics(new[] {
-                  ("BCP169", DiagnosticLevel.Error, "Expected resource name to contain 0 \"/\" characters. The number of name segments must match the number of segments in the resource type."),
+                  ("BCP169", DiagnosticLevel.Error, "Expected resource name to contain 0 \"/\" character(s). The number of name segments must match the number of segments in the resource type."),
                 });
             }
 
@@ -393,9 +391,41 @@ resource res1 'Microsoft.Rp1/resource1/child2@2020-06-01' = {
             {
                 template.Should().NotHaveValue();
                 diags.ExcludingMissingTypes().Should().HaveDiagnostics(new[] {
-                  ("BCP169", DiagnosticLevel.Error, "Expected resource name to contain 1 \"/\" characters. The number of name segments must match the number of segments in the resource type."),
+                  ("BCP169", DiagnosticLevel.Error, "Expected resource name to contain 1 \"/\" character(s). The number of name segments must match the number of segments in the resource type."),
                 });
             }
+        }
+
+        [TestMethod]
+        public void Top_level_resource_should_have_appropriate_number_of_slashes_in_interpolated_names()
+        {
+
+            var result = CompilationHelper.Compile(TestTypeHelper.CreateEmptyProvider(),
+                ("main.bicep", @"
+param p1 string
+
+resource res1 'Microsoft.Rp1/resource1@2020-06-01' = {
+  name: '${p1}/res2'
+}
+"));
+
+            // There are definitely too many '/' characters in the name - we should return an error.
+            result.Should().NotGenerateATemplate();
+            result.Should().HaveDiagnostics(new [] {
+                ("BCP169", DiagnosticLevel.Error, "Expected resource name to contain 0 \"/\" character(s). The number of name segments must match the number of segments in the resource type."),
+            });
+
+            result = CompilationHelper.Compile(TestTypeHelper.CreateEmptyProvider(),
+                ("main.bicep", @"
+param p1 string
+
+resource res1 'Microsoft.Rp1/resource1/child1@2020-06-01' = {
+  name: 'a${p1}b'
+}
+"));
+
+            // The name requires a single '/' character to be valid, but we cannot be sure that 'p1' doesn't contain it - we should not return an error.
+            result.Should().NotHaveAnyDiagnostics();
         }
 
         [TestMethod]
@@ -429,7 +459,8 @@ output child0Name string = child[0].name
                 template.Should().HaveValueAtPath("$.resources[0].name", "parent");
                 template.Should().NotHaveValueAtPath("$.resources[0].dependsOn");
 
-                template.Should().HaveValueAtPath("$.resources[1].copy", new JObject { 
+                template.Should().HaveValueAtPath("$.resources[1].copy", new JObject
+                {
                     ["name"] = "child",
                     ["count"] = "[length(variables('items'))]",
                 });
@@ -472,14 +503,16 @@ output child0Name string = child[0].name
             {
                 diags.ExcludingMissingTypes().Should().BeEmpty();
 
-                template.Should().HaveValueAtPath("$.resources[0].copy", new JObject { 
+                template.Should().HaveValueAtPath("$.resources[0].copy", new JObject
+                {
                     ["name"] = "parent",
                     ["count"] = "[length(variables('items'))]"
                 });
                 template.Should().HaveValueAtPath("$.resources[0].name", "[format('parent{0}', variables('items')[copyIndex()])]");
                 template.Should().NotHaveValueAtPath("$.resources[0].dependsOn");
 
-                template.Should().HaveValueAtPath("$.resources[1].copy", new JObject { 
+                template.Should().HaveValueAtPath("$.resources[1].copy", new JObject
+                {
                     ["name"] = "child",
                     ["count"] = "[length(variables('items'))]",
                 });
@@ -522,7 +555,8 @@ output childName string = child.name
             {
                 diags.ExcludingMissingTypes().Should().BeEmpty();
 
-                template.Should().HaveValueAtPath("$.resources[0].copy", new JObject { 
+                template.Should().HaveValueAtPath("$.resources[0].copy", new JObject
+                {
                     ["name"] = "parent",
                     ["count"] = "[length(variables('items'))]"
                 });
@@ -569,14 +603,16 @@ output child0Name string = child[0].name
             {
                 diags.ExcludingMissingTypes().Should().BeEmpty();
 
-                template.Should().HaveValueAtPath("$.resources[0].copy", new JObject { 
+                template.Should().HaveValueAtPath("$.resources[0].copy", new JObject
+                {
                     ["name"] = "parent",
                     ["count"] = "[length(variables('items'))]"
                 });
                 template.Should().HaveValueAtPath("$.resources[0].name", "[format('parent{0}', variables('items')[copyIndex()])]");
                 template.Should().NotHaveValueAtPath("$.resources[0].dependsOn");
 
-                template.Should().HaveValueAtPath("$.resources[1].copy", new JObject { 
+                template.Should().HaveValueAtPath("$.resources[1].copy", new JObject
+                {
                     ["name"] = "child",
                     ["count"] = "[length(variables('items'))]",
                 });

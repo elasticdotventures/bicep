@@ -16,10 +16,13 @@ module moduleWithoutPath = {
 
 }
 
+// #completionTest(41) -> moduleBodyCompletions
+module moduleWithPath './moduleb.bicep' =
+
 // missing identifier #completionTest(7) -> empty
 module 
 
-// #completionTest(24,25) -> object
+// #completionTest(24,25) -> moduleObject
 module missingValue '' = 
 
 var interp = 'hello'
@@ -406,7 +409,7 @@ module paramNameCompletionsInFilteredLoops 'modulea.bicep' = [for (x,i) in empty
   name: 'hello-${x}'
   params: {
     // #completionTest(0,1,2) -> moduleAParams
-
+  
   }
 }]
 
@@ -498,3 +501,64 @@ module anyTypeInScopeLoop 'empty.bicep' = [for thing in []: {
 
   scope: any(42)
 }]
+
+// Key Vault Secret Reference
+
+resource kv 'Microsoft.KeyVault/vaults@2019-09-01' existing = {
+  name: 'testkeyvault'
+}
+
+module secureModule1 'moduleb.bicep' = {
+  name: 'secureModule1'
+  params: {       
+    stringParamA: kv.getSecret('mySecret')
+    stringParamB: '${kv.getSecret('mySecret')}'
+    objParam: kv.getSecret('mySecret')
+    arrayParam: kv.getSecret('mySecret')
+    secureStringParam: '${kv.getSecret('mySecret')}'
+    secureObjectParam: kv.getSecret('mySecret')
+    secureStringParam2: '${kv.getSecret('mySecret')}'
+    secureObjectParam2: kv.getSecret('mySecret')
+  }
+}
+
+module secureModule2 'BAD_MODULE_PATH.bicep' = {
+  name: 'secureModule2'
+  params: {       
+    secret: kv.getSecret('mySecret')
+  }
+}
+
+module issue3000 'empty.bicep' = {
+  name: 'issue3000Module'
+  params: {}
+  identity: {
+    type: 'SystemAssigned'
+  }
+  extendedLocation: {}
+  sku: {}
+  kind: 'V1'
+  managedBy: 'string'
+  mangedByExtended: [
+   'str1'
+   'str2'
+  ]
+  zones: [
+   'str1'
+   'str2'
+  ]
+  plan: {}
+  eTag: ''
+  scale: {}  
+}
+
+module invalidJsonMod 'modulec.json' = {
+}
+
+module jsonModMissingParam 'moduled.json' = {
+  name: 'jsonModMissingParam'
+  params: {
+    foo: 123
+    baz: 'C'
+  }
+}

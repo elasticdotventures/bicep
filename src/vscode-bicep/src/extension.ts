@@ -1,32 +1,72 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-import * as vscode from "vscode";
+import vscode from "vscode";
+import {
+  createAzExtOutputChannel,
+  registerUIExtensionVariables,
+} from "vscode-azureextensionui";
 
-import { createLogger } from "./utils/logger";
-import { launchLanguageServiceWithProgressReport } from "./language/client";
-import { activateWithTelemetryAndErrorHandling } from "./utils/telemetry";
-import { createAzExtOutputChannel } from "vscode-azureextensionui";
+import { launchLanguageServiceWithProgressReport } from "./language";
+import { BicepVisualizerViewManager } from "./visualizer";
+import {
+  BuildCommand,
+  CommandManager,
+  ShowSourceCommand,
+  ShowVisualizerCommand,
+  ShowVisualizerToSideCommand,
+} from "./commands";
+import {
+  createLogger,
+  resetLogger,
+  activateWithTelemetryAndErrorHandling,
+  Disposable,
+} from "./utils";
+
+class BicepExtension extends Disposable {
+  private constructor(public readonly extensionUri: vscode.Uri) {
+    super();
+  }
+
+  public static create(context: vscode.ExtensionContext) {
+    const extension = new BicepExtension(context.extensionUri);
+    context.subscriptions.push(extension);
+
+    return extension;
+  }
+}
 
 export async function activate(
   context: vscode.ExtensionContext
 ): Promise<void> {
+  const extension = BicepExtension.create(context);
   const outputChannel = createAzExtOutputChannel("Bicep", "bicep");
 
-  await activateWithTelemetryAndErrorHandling(
-    context,
-    outputChannel,
-    async () => {
-      const logger = createLogger(context, outputChannel);
+  extension.register(outputChannel);
+  extension.register(createLogger(context, outputChannel));
+  registerUIExtensionVariables({ context, outputChannel });
 
-      try {
-        await launchLanguageServiceWithProgressReport(context, outputChannel);
-      } catch (e) {
-        logger.error(e);
-        throw e;
-      }
-    }
-  );
+  await activateWithTelemetryAndErrorHandling(async () => {
+    const languageClient = await launchLanguageServiceWithProgressReport(
+      context,
+      outputChannel
+    );
+
+    const viewManager = extension.register(
+      new BicepVisualizerViewManager(extension.extensionUri, languageClient)
+    );
+
+    // Register commands.
+    await extension
+      .register(new CommandManager())
+      .registerCommands(
+        new BuildCommand(languageClient),
+        new ShowVisualizerCommand(viewManager),
+        new ShowVisualizerToSideCommand(viewManager),
+        new ShowSourceCommand(viewManager)
+      );
+  });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-export function deactivate(): void {}
+export function deactivate(): void {
+  resetLogger();
+}

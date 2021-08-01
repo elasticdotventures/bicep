@@ -5,28 +5,34 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Bicep.Core.Diagnostics;
-using Bicep.Core.Resources;
 using Bicep.Core.Semantics;
 using Bicep.Core.TypeSystem;
 using Bicep.Core.TypeSystem.Az;
 using Bicep.Core.UnitTests.Assertions;
 using Bicep.Core.UnitTests.Utils;
-using Azure.Bicep.Types;
-using Azure.Bicep.Types.Az;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 using Bicep.Core.Extensions;
+using Moq;
+using Bicep.Core.FileSystem;
 
 namespace Bicep.Core.UnitTests.TypeSystem.Az
 {
     [TestClass]
     public class AzResourceTypeProviderTests
     {
+        private static readonly ImmutableHashSet<string> ExpectedLoopVariantProperties = new[]
+        {
+            LanguageConstants.ResourceNamePropertyName,
+            LanguageConstants.ResourceScopePropertyName,
+            LanguageConstants.ResourceParentPropertyName
+        }.ToImmutableHashSet(LanguageConstants.IdentifierComparer);
+
         [DataTestMethod]
         [DataRow(ResourceTypeGenerationFlags.None)]
         [DataRow(ResourceTypeGenerationFlags.ExistingResource)]
         [DataRow(ResourceTypeGenerationFlags.PermitLiteralNameProperty)]
+        [DataRow(ResourceTypeGenerationFlags.NestedResource)]
         [DataRow(ResourceTypeGenerationFlags.ExistingResource | ResourceTypeGenerationFlags.PermitLiteralNameProperty)]
         public void AzResourceTypeProvider_can_deserialize_all_types_without_throwing(ResourceTypeGenerationFlags flags)
         {
@@ -68,15 +74,26 @@ namespace Bicep.Core.UnitTests.TypeSystem.Az
                     var topLevelProperties = GetTopLevelProperties(resourceType);
                     var symbolicProperties = topLevelProperties.Where(property => IsSymbolicProperty(property));
                     symbolicProperties.Should().NotBeEmpty();
+                    symbolicProperties.Should().OnlyContain(property => property.Flags.HasFlag(TypePropertyFlags.DisallowAny), $"because all symbolic properties in type '{availableType.FullyQualifiedType}' and api version '{availableType.ApiVersion}' should have the {nameof(TypePropertyFlags.DisallowAny)} flag.");
 
-                    symbolicProperties.Should().OnlyContain(property => property.Flags.HasFlag(TypePropertyFlags.DisallowAny));
+                    var loopVariantProperties = topLevelProperties.Where(property =>
+                        ExpectedLoopVariantProperties.Contains(property.Name) &&
+                        (!string.Equals(property.Name, LanguageConstants.ResourceScopePropertyName, LanguageConstants.IdentifierComparison) || IsSymbolicProperty(property)));
+                    loopVariantProperties.Should().NotBeEmpty();
+                    loopVariantProperties.Should().OnlyContain(property => property.Flags.HasFlag(TypePropertyFlags.LoopVariant), $"because all loop variant properties in type '{availableType.FullyQualifiedType}' and api version '{availableType.ApiVersion}' should have the {nameof(TypePropertyFlags.LoopVariant)} flag.");
+
+                    if (flags.HasFlag(ResourceTypeGenerationFlags.NestedResource))
+                    {
+                        // syntactically nested resources should not have the parent property
+                        topLevelProperties.Should().NotContain(property => string.Equals(property.Name, LanguageConstants.ResourceParentPropertyName, LanguageConstants.IdentifierComparison));
+                    }
                 }
             }
         }
 
         [TestMethod]
         public void AzResourceTypeProvider_can_list_all_types_without_throwing()
-        
+
         {
             var resourceTypeProvider = AzResourceTypeProvider.CreateWithAzTypes();
             var availableTypes = resourceTypeProvider.GetAvailableTypes();
@@ -90,7 +107,7 @@ namespace Bicep.Core.UnitTests.TypeSystem.Az
         public void AzResourceTypeProvider_should_warn_for_missing_resource_types()
         {
             Compilation createCompilation(string program)
-                => new Compilation(AzResourceTypeProvider.CreateWithAzTypes(), SyntaxTreeGroupingFactory.CreateFromText(program));
+                => new Compilation(AzResourceTypeProvider.CreateWithAzTypes(), SourceFileGroupingFactory.CreateFromText(program, new Mock<IFileResolver>(MockBehavior.Strict).Object));
 
             // Missing top-level properties - should be an error
             var compilation = createCompilation(@"
@@ -98,7 +115,7 @@ resource missingResource 'Mock.Rp/madeUpResourceType@2020-01-01' = {
   name: 'missingResource'
 }
 ");
-            compilation.Should().HaveDiagnostics(new [] {
+            compilation.Should().HaveDiagnostics(new[] {
                 ("BCP081", DiagnosticLevel.Warning, "Resource type \"Mock.Rp/madeUpResourceType@2020-01-01\" does not have types available.")
             });
         }
@@ -107,7 +124,7 @@ resource missingResource 'Mock.Rp/madeUpResourceType@2020-01-01' = {
         public void AzResourceTypeProvider_should_error_for_top_level_and_warn_for_nested_properties()
         {
             Compilation createCompilation(string program)
-                => new Compilation(BuiltInTestTypes.Create(), SyntaxTreeGroupingFactory.CreateFromText(program));
+                => new Compilation(BuiltInTestTypes.Create(), SourceFileGroupingFactory.CreateFromText(program, new Mock<IFileResolver>(MockBehavior.Strict).Object));
 
             // Missing top-level properties - should be an error
             var compilation = createCompilation(@"
@@ -115,7 +132,7 @@ resource missingRequired 'Test.Rp/readWriteTests@2020-01-01' = {
   name: 'missingRequired'
 }
 ");
-            compilation.Should().HaveDiagnostics(new [] {
+            compilation.Should().HaveDiagnostics(new[] {
                 ("BCP035", DiagnosticLevel.Error, "The specified \"resource\" declaration is missing the following required properties: \"properties\".")
             });
 
@@ -129,8 +146,8 @@ resource unexpectedTopLevel 'Test.Rp/readWriteTests@2020-01-01' = {
   madeUpProperty: true
 }
 ");
-            compilation.Should().HaveDiagnostics(new [] {
-                ("BCP038", DiagnosticLevel.Error, "The property \"madeUpProperty\" is not allowed on objects of type \"Test.Rp/readWriteTests@2020-01-01\". Permissible properties include \"dependsOn\"."),
+            compilation.Should().HaveDiagnostics(new[] {
+                ("BCP037", DiagnosticLevel.Error, "The property \"madeUpProperty\" is not allowed on objects of type \"Test.Rp/readWriteTests@2020-01-01\". Permissible properties include \"dependsOn\". If this is an inaccuracy in the documentation, please report it to the Bicep Team."),
             });
 
             // Missing non top-level properties - should be a warning
@@ -141,7 +158,7 @@ resource missingRequiredProperty 'Test.Rp/readWriteTests@2020-01-01' = {
   }
 }
 ");
-            compilation.Should().HaveDiagnostics(new [] {
+            compilation.Should().HaveDiagnostics(new[] {
                 ("BCP035", DiagnosticLevel.Warning, "The specified \"object\" declaration is missing the following required properties: \"required\"."),
             });
 
@@ -155,12 +172,12 @@ resource unexpectedPropertiesProperty 'Test.Rp/readWriteTests@2020-01-01' = {
   }
 }
 ");
-            compilation.Should().HaveDiagnostics(new [] {
-                ("BCP038", DiagnosticLevel.Warning, "The property \"madeUpProperty\" is not allowed on objects of type \"Properties\". Permissible properties include \"readwrite\", \"writeonly\"."),
+            compilation.Should().HaveDiagnostics(new[] {
+                ("BCP037", DiagnosticLevel.Warning, "The property \"madeUpProperty\" is not allowed on objects of type \"Properties\". Permissible properties include \"readwrite\", \"writeonly\". If this is an inaccuracy in the documentation, please report it to the Bicep Team."),
             });
         }
 
-        private static ImmutableHashSet<TypeSymbol> ExpectedBuiltInTypes { get; } = new []
+        private static ImmutableHashSet<TypeSymbol> ExpectedBuiltInTypes { get; } = new[]
         {
             LanguageConstants.Any,
             LanguageConstants.Null,

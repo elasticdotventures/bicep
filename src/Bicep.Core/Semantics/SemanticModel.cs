@@ -2,26 +2,36 @@
 // Licensed under the MIT License.
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
+using Bicep.Core.Analyzers.Linter;
+using Bicep.Core.Configuration;
 using Bicep.Core.Diagnostics;
 using Bicep.Core.Emit;
 using Bicep.Core.Extensions;
+using Bicep.Core.FileSystem;
 using Bicep.Core.Syntax;
 using Bicep.Core.Syntax.Visitors;
 using Bicep.Core.TypeSystem;
+using Bicep.Core.Workspaces;
 
 namespace Bicep.Core.Semantics
 {
-    public class SemanticModel
+    public class SemanticModel : ISemanticModel
     {
         private readonly Lazy<EmitLimitationInfo> emitLimitationInfoLazy;
         private readonly Lazy<SymbolHierarchy> symbolHierarchyLazy;
         private readonly Lazy<ResourceAncestorGraph> resourceAncestorsLazy;
+        private readonly Lazy<LinterAnalyzer> linterAnalyzerLazy;
+        private readonly Lazy<ImmutableArray<TypeProperty>> parameterTypePropertiesLazy;
+        private readonly Lazy<ImmutableArray<TypeProperty>> outputTypePropertiesLazy;
+        private readonly Lazy<IEnumerable<IDiagnostic>> allDiagnostics;
 
-        public SemanticModel(Compilation compilation, SyntaxTree syntaxTree)
+        public SemanticModel(Compilation compilation, BicepFile sourceFile, IFileResolver fileResolver)
         {
             Compilation = compilation;
-            SyntaxTree = syntaxTree;
+            SourceFile = sourceFile;
+            FileResolver = fileResolver;
 
             // create this in locked mode by default
             // this blocks accidental type or binding queries until binding is done
@@ -29,8 +39,8 @@ namespace Bicep.Core.Semantics
             var symbolContext = new SymbolContext(compilation, this);
             SymbolContext = symbolContext;
 
-            Binder = new Binder(syntaxTree, symbolContext);
-            TypeManager = new TypeManager(compilation.ResourceTypeProvider, Binder);
+            Binder = new Binder(sourceFile, symbolContext);
+            TypeManager = new TypeManager(compilation.ResourceTypeProvider, Binder, fileResolver);
 
             // name binding is done
             // allow type queries now
@@ -44,11 +54,48 @@ namespace Bicep.Core.Semantics
 
                 return hierarchy;
             });
-            this.resourceAncestorsLazy = new Lazy<ResourceAncestorGraph>(() => ResourceAncestorGraph.Compute(syntaxTree, Binder));
+            this.resourceAncestorsLazy = new Lazy<ResourceAncestorGraph>(() => ResourceAncestorGraph.Compute(sourceFile, Binder));
 
+            // lazy loading the linter will delay linter rule loading
+            // and configuration loading until the linter is actually needed
+            this.linterAnalyzerLazy = new Lazy<LinterAnalyzer>(() => new LinterAnalyzer());
+
+            // lazy load single use diagnostic set
+            this.allDiagnostics = new Lazy<IEnumerable<IDiagnostic>>(() => AssembleDiagnostics(default));
+
+            this.parameterTypePropertiesLazy = new Lazy<ImmutableArray<TypeProperty>>(() =>
+            {
+                var paramTypeProperties = new List<TypeProperty>();
+
+                foreach (var param in this.Root.ParameterDeclarations.DistinctBy(p => p.Name))
+                {
+                    var typePropertyFlags = TypePropertyFlags.WriteOnly;
+                    if (SyntaxHelper.TryGetDefaultValue(param.DeclaringParameter) == null)
+                    {
+                        // if there's no default value, it must be specified
+                        typePropertyFlags |= TypePropertyFlags.Required;
+                    }
+
+                    paramTypeProperties.Add(new TypeProperty(param.Name, param.Type, typePropertyFlags));
+                }
+
+                return paramTypeProperties.ToImmutableArray();
+            });
+
+            this.outputTypePropertiesLazy = new Lazy<ImmutableArray<TypeProperty>>(() =>
+            {
+                var outputTypeProperties = new List<TypeProperty>();
+
+                foreach (var output in this.Root.OutputDeclarations.DistinctBy(o => o.Name))
+                {
+                    outputTypeProperties.Add(new TypeProperty(output.Name, output.Type, TypePropertyFlags.ReadOnly));
+                }
+
+                return outputTypeProperties.ToImmutableArray();
+            });
         }
 
-        public SyntaxTree SyntaxTree { get; }
+        public BicepFile SourceFile { get; }
 
         public IBinder Binder { get; }
 
@@ -58,27 +105,35 @@ namespace Bicep.Core.Semantics
 
         public ITypeManager TypeManager { get; }
 
+        public IFileResolver FileResolver { get; }
+
         public EmitLimitationInfo EmitLimitationInfo => emitLimitationInfoLazy.Value;
 
         public ResourceAncestorGraph ResourceAncestors => resourceAncestorsLazy.Value;
 
+        private LinterAnalyzer LinterAnalyzer => linterAnalyzerLazy.Value;
+
+        public ImmutableArray<TypeProperty> ParameterTypeProperties => this.parameterTypePropertiesLazy.Value;
+
+        public ImmutableArray<TypeProperty> OutputTypeProperties => this.outputTypePropertiesLazy.Value;
+
         /// <summary>
         /// Gets all the parser and lexer diagnostics unsorted. Does not include diagnostics from the semantic model.
         /// </summary>
-        public IEnumerable<Diagnostic> GetParseDiagnostics() => this.Root.Syntax.GetParseDiagnostics();
+        public IEnumerable<IDiagnostic> GetParseDiagnostics() => this.Root.Syntax.GetParseDiagnostics();
 
         /// <summary>
         /// Gets all the semantic diagnostics unsorted. Does not include parser and lexer diagnostics.
         /// </summary>
         /// <returns></returns>
-        public IReadOnlyList<Diagnostic> GetSemanticDiagnostics()
+        public IReadOnlyList<IDiagnostic> GetSemanticDiagnostics()
         {
             var diagnosticWriter = ToListDiagnosticWriter.Create();
 
             var visitor = new SemanticDiagnosticVisitor(diagnosticWriter);
             visitor.Visit(this.Root);
 
-            foreach (var missingDeclarationSyntax in this.SyntaxTree.ProgramSyntax.Children.OfType<MissingDeclarationSyntax>())
+            foreach (var missingDeclarationSyntax in this.SourceFile.ProgramSyntax.Children.OfType<MissingDeclarationSyntax>())
             {
                 // Trigger type checking manually as missing declarations are not bound to any symbol.
                 this.TypeManager.GetTypeInfo(missingDeclarationSyntax);
@@ -86,21 +141,47 @@ namespace Bicep.Core.Semantics
 
             var typeValidationDiagnostics = TypeManager.GetAllDiagnostics();
             diagnosticWriter.WriteMultiple(typeValidationDiagnostics);
-
             diagnosticWriter.WriteMultiple(EmitLimitationInfo.Diagnostics);
 
             return diagnosticWriter.GetDiagnostics();
         }
 
         /// <summary>
-        /// Gets all the diagnostics sorted by span position ascending. This includes lexer, parser, and semantic diagnostics.
+        /// Gets all the analyzer diagnostics unsorted.
         /// </summary>
-        public IEnumerable<Diagnostic> GetAllDiagnostics() => GetParseDiagnostics()
+        /// <returns></returns>
+        public IReadOnlyList<IDiagnostic> GetAnalyzerDiagnostics(ConfigHelper? overrideConfig = default)
+        {
+            var diagnostics = LinterAnalyzer.Analyze(this, overrideConfig);
+
+            var diagnosticWriter = ToListDiagnosticWriter.Create();
+            diagnosticWriter.WriteMultiple(diagnostics);
+
+            return diagnosticWriter.GetDiagnostics();
+        }
+
+        /// <summary>
+        /// Cached diagnostics from compilation
+        /// </summary>
+        public IEnumerable<IDiagnostic> GetAllDiagnostics(ConfigHelper? overrideConfig = default)
+        {
+            if (overrideConfig == default)
+            {
+                return allDiagnostics.Value;
+            }
+            return AssembleDiagnostics(overrideConfig);
+        }
+
+        private IEnumerable<IDiagnostic> AssembleDiagnostics(ConfigHelper? overrideConfig)
+        {
+            return GetParseDiagnostics()
             .Concat(GetSemanticDiagnostics())
+            .Concat(GetAnalyzerDiagnostics(overrideConfig))
             .OrderBy(diag => diag.Span.Position);
+        }
 
         public bool HasErrors()
-            => GetAllDiagnostics().Any(x => x.Level == DiagnosticLevel.Error);
+            => allDiagnostics.Value.Any(x => x.Level == DiagnosticLevel.Error);
 
         public TypeSymbol GetTypeInfo(SyntaxBase syntax) => this.TypeManager.GetTypeInfo(syntax);
 
@@ -124,7 +205,8 @@ namespace Bicep.Core.Semantics
                     return null;
                 }
 
-                var typeProperty = TypeAssignmentVisitor.UnwrapType(baseType) switch {
+                var typeProperty = TypeAssignmentVisitor.UnwrapType(baseType) switch
+                {
                     ObjectType x => x.Properties.TryGetValue(property, out var tp) ? tp : null,
                     DiscriminatedObjectType x => x.TryGetDiscriminatorProperty(property),
                     _ => null
@@ -141,40 +223,46 @@ namespace Bicep.Core.Semantics
             switch (syntax)
             {
                 case InstanceFunctionCallSyntax ifc:
-                {
-                    var baseType = GetTypeInfo(ifc.BaseExpression);
-                    switch (baseType)
                     {
-                        case NamespaceType namespaceType when SyntaxTree.Hierarchy.GetParent(ifc) is DecoratorSyntax:
-                            return namespaceType.DecoratorResolver.TryGetSymbol(ifc.Name);
-                        case ObjectType objectType:
-                            return objectType.MethodResolver.TryGetSymbol(ifc.Name);
-                    }
+                        var baseType = GetDeclaredType(ifc.BaseExpression);
 
-                    return null;
-                }
+                        if (baseType is null)
+                        {
+                            return null;
+                        }
+
+                        switch (TypeAssignmentVisitor.UnwrapType(baseType))
+                        {
+                            case NamespaceType namespaceType when SourceFile.Hierarchy.GetParent(ifc) is DecoratorSyntax:
+                                return namespaceType.DecoratorResolver.TryGetSymbol(ifc.Name);
+                            case ObjectType objectType:
+                                return objectType.MethodResolver.TryGetSymbol(ifc.Name);
+                        }
+
+                        return null;
+                    }
                 case PropertyAccessSyntax propertyAccess:
-                {
-                    var baseType = GetDeclaredType(propertyAccess.BaseExpression);
-                    var property = propertyAccess.PropertyName.IdentifierName;
+                    {
+                        var baseType = GetDeclaredType(propertyAccess.BaseExpression);
+                        var property = propertyAccess.PropertyName.IdentifierName;
 
-                    return GetPropertySymbol(baseType, property);
-                }
+                        return GetPropertySymbol(baseType, property);
+                    }
                 case ObjectPropertySyntax objectProperty:
-                {
-                    if (Binder.GetParent(objectProperty) is not {} parentSyntax)
                     {
-                        return null;
-                    }
-                    
-                    var baseType = GetDeclaredType(parentSyntax);
-                    if (objectProperty.TryGetKeyText() is not {} property)
-                    {
-                        return null;
-                    }
+                        if (Binder.GetParent(objectProperty) is not { } parentSyntax)
+                        {
+                            return null;
+                        }
 
-                    return GetPropertySymbol(baseType, property);
-                }
+                        var baseType = GetDeclaredType(parentSyntax);
+                        if (objectProperty.TryGetKeyText() is not { } property)
+                        {
+                            return null;
+                        }
+
+                        return GetPropertySymbol(baseType, property);
+                    }
             }
 
             return this.Binder.GetSymbolInfo(syntax);
@@ -186,7 +274,7 @@ namespace Bicep.Core.Semantics
         /// </summary>
         /// <param name="symbol">The symbol</param>
         public IEnumerable<SyntaxBase> FindReferences(Symbol symbol)
-            => SyntaxAggregator.Aggregate(this.SyntaxTree.ProgramSyntax, new List<SyntaxBase>(), (accumulated, current) =>
+            => SyntaxAggregator.Aggregate(this.SourceFile.ProgramSyntax, new List<SyntaxBase>(), (accumulated, current) =>
                 {
                     if (object.ReferenceEquals(symbol, this.GetSymbolInfo(current)))
                     {
